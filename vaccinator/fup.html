@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost to Follow-Up - VacciLink</title>
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/vaccinator_dashboard.css">
+    <style>
+        .child-list-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .child-list-table th, .child-list-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e8f5e9;
+        }
+        .child-list-table th {
+            background-color: var(--light-green);
+        }
+        .missed-entry {
+            background-color: #ffebee;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <svg viewBox="0 0 24 24" width="28" height="28" stroke="white" stroke-width="2.5" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span>VacciLink</span>
+        </div>
+
+        <div class="vaccinator-profile">
+            <div class="profile-img">SY</div>
+            <div class="profile-info">
+                <h4>Seema Yadav</h4>
+                <p>Vaccinator</p>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="sessions.html" class="nav-link">Vaccinator Session</a>
+            <a href="schedule.html" class="nav-link">Vaccination Schedule</a>
+            <a href="fup.html" class="nav-link active">Lost to Follow-Up</a>
+            <a href="appointment.html" class="nav-link">Appointment</a>
+            <a href="profile.html" class="nav-link">Profile</a>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <header class="welcome-header">
+            <h1>Lost to Follow-Up</h1>
+            <p>Track and manage children who have missed 2 consecutive sessions</p>
+        </header>
+
+        <div class="dashboard-grid" style="grid-template-columns: 1fr;">
+            <div class="card">
+                <h3>Children Missing 2 Consecutive Sessions</h3>
+                
+                <table class="child-list-table">
+                    <thead>
+                        <tr>
+                            <th>Child Name</th>
+                            <th>Age</th>
+                            <th>Last Visit Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="missed-entry">
+                            <td>Aarav Sharma</td>
+                            <td>1.5 Years</td>
+                            <td>January 15, 2026</td>
+                        </tr>
+                        <tr class="missed-entry">
+                            <td>Suhana Khan</td>
+                            <td>9 Months</td>
+                            <td>November 10, 2025</td>
+                        </tr>
+                        <tr class="missed-entry">
+                            <td>Vivaan Reddy</td>
+                            <td>1 Year</td>
+                            <td>December 05, 2025</td>
+                        </tr>
+                        <tr class="missed-entry">
+                            <td>Rahul Verma</td>
+                            <td>2 Years</td>
+                            <td>January 12, 2026</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 30px; display: flex; justify-content: flex-end;">
+                  <button class="btn btn-qr" style="background-color: var(--primary-green); padding: 12px 25px;">Export Follow-Up List</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

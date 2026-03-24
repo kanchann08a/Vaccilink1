@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment - VacciLink</title>
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/vaccinator_dashboard.css">
+    <style>
+        .appointment-card {
+            cursor: pointer;
+            text-align: center;
+            padding: 50px;
+            transition: 0.3s;
+        }
+        .appointment-card:hover {
+            background-color: var(--light-green);
+        }
+        .appointment-card h3 {
+            color: var(--primary-green);
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <svg viewBox="0 0 24 24" width="28" height="28" stroke="white" stroke-width="2.5" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span>VacciLink</span>
+        </div>
+
+        <div class="vaccinator-profile">
+            <div class="profile-img">SY</div>
+            <div class="profile-info">
+                <h4>Seema Yadav</h4>
+                <p>Vaccinator</p>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="sessions.html" class="nav-link">Vaccinator Session</a>
+            <a href="schedule.html" class="nav-link">Vaccination Schedule</a>
+            <a href="fup.html" class="nav-link">Lost to Follow-Up</a>
+            <a href="appointment.html" class="nav-link active">Appointment</a>
+            <a href="profile.html" class="nav-link">Profile</a>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <header class="welcome-header">
+            <h1>Manage Appointments</h1>
+            <p>Handle onsite registrations and online bookings</p>
+        </header>
+
+        <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; gap: 40px;">
+            <div class="card appointment-card" onclick="showMessage(' onsite registration form')">
+                <svg viewBox="0 0 24 24" width="60" stroke="var(--primary-green)" stroke-width="2" fill="none" style="margin-bottom: 20px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+                <h3>Register Onsite Child</h3>
+                <p>Register a new child patient currently present at the clinic.</p>
+            </div>
+
+            <div class="card appointment-card" onclick="showMessage(' list of online appointments')">
+                <svg viewBox="0 0 24 24" width="60" stroke="var(--primary-green)" stroke-width="2" fill="none" style="margin-bottom: 20px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <h3>Accept Online Appointment</h3>
+                <p>Review and confirm vaccination bookings made through the parent portal.</p>
+            </div>
+        </div>
+
+        <div id="messageBoard" class="card" style="display: none; margin-top: 40px; border-left: 5px solid var(--primary-green);">
+            <h3 id="messageText">Display Message</h3>
+            <p style="margin-top: 10px;">This feature is part of the next phase. Backend integration required.</p>
+        </div>
+    </main>
+
+    <script>
+        function showMessage(type) {
+            const board = document.getElementById('messageBoard');
+            const text = document.getElementById('messageText');
+            text.innerText = `Feature Coming Soon: Showing ${type}`;
+            board.style.display = 'block';
+            window.scrollTo({ top: board.offsetTop, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

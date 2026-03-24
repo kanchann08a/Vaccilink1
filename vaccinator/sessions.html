@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaccinator Session - VacciLink</title>
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/vaccinator_dashboard.css">
+    <style>
+        .month-card {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .month-card:hover {
+            transform: scale(1.02);
+        }
+        .child-list-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            display: none;
+        }
+        .child-list-table th, .child-list-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e8f5e9;
+        }
+        .child-list-table th {
+            background-color: var(--light-green);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <svg viewBox="0 0 24 24" width="28" height="28" stroke="white" stroke-width="2.5" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span>VacciLink</span>
+        </div>
+
+        <div class="vaccinator-profile">
+            <div class="profile-img">SY</div>
+            <div class="profile-info">
+                <h4>Seema Yadav</h4>
+                <p>Vaccinator</p>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="sessions.html" class="nav-link active">Vaccinator Session</a>
+            <a href="schedule.html" class="nav-link">Vaccination Schedule</a>
+            <a href="fup.html" class="nav-link">Lost to Follow-Up</a>
+            <a href="appointment.html" class="nav-link">Appointment</a>
+            <a href="profile.html" class="nav-link">Profile</a>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <header class="welcome-header">
+            <h1>Vaccinator Sessions</h1>
+            <p>View and manage vaccination session records by month</p>
+        </header>
+
+        <div class="dashboard-grid" style="grid-template-columns: 1fr;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
+                <!-- Current Month -->
+                <div class="card month-card" onclick="showChildren('March 2026')">
+                    <h3 style="color: var(--primary-green);">March 2026</h3>
+                    <p style="margin-top: 10px; font-size: 1.1rem;">Children Vaccinated: <strong>45</strong></p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">(Current Month)</p>
+                </div>
+
+                <!-- Last Month -->
+                <div class="card month-card" onclick="showChildren('February 2026')">
+                    <h3 style="color: var(--primary-green);">February 2026</h3>
+                    <p style="margin-top: 10px; font-size: 1.1rem;">Children Vaccinated: <strong>120</strong></p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">(Last Month)</p>
+                </div>
+
+                <!-- Previous Month -->
+                <div class="card month-card" onclick="showChildren('January 2026')">
+                    <h3 style="color: var(--primary-green);">January 2026</h3>
+                    <p style="margin-top: 10px; font-size: 1.1rem;">Children Vaccinated: <strong>98</strong></p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">(Previous Month)</p>
+                </div>
+            </div>
+
+            <div id="childrenListSection" class="card" style="display: none;">
+                <h3 id="selectedMonthTitle">Children List</h3>
+                <table class="child-list-table" id="childTable" style="display: table;">
+                    <thead>
+                        <tr>
+                            <th>Child Name</th>
+                            <th>ID</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="childTableBody">
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const dummyData = {
+            'March 2026': [
+                { name: 'Aarav Sharma', id: '#990123', date: 'March 15, 2026' },
+                { name: 'Ishani Gupta', id: '#990456', date: 'March 14, 2026' }
+            ],
+            'February 2026': [
+                { name: 'Vivaan Reddy', id: '#990789', date: 'Feb 20, 2026' },
+                { name: 'Suhana Khan', id: '#990998', date: 'Feb 18, 2026' }
+            ],
+            'January 2026': [
+                { name: 'Rahul Verma', id: '#990222', date: 'Jan 10, 2026' },
+                { name: 'Ananya S.', id: '#990333', date: 'Jan 12, 2026' }
+            ]
+        };
+
+        function showChildren(month) {
+            const section = document.getElementById('childrenListSection');
+            const title = document.getElementById('selectedMonthTitle');
+            const body = document.getElementById('childTableBody');
+
+            title.innerText = `Children Vaccinated in ${month}`;
+            body.innerHTML = '';
+
+            dummyData[month].forEach(child => {
+                const row = `<tr>
+                    <td>${child.name}</td>
+                    <td>${child.id}</td>
+                    <td>${child.date}</td>
+                </tr>`;
+                body.innerHTML += row;
+            });
+
+            section.style.display = 'block';
+            window.scrollTo({ top: section.offsetTop, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

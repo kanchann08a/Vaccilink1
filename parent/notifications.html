@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts & Reminders - VacciLink</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <style>
+        .notification-item { display: flex; gap: 20px; padding: 20px; border-bottom: 1px solid #f8faff; transition: background 0.3s; cursor: pointer; }
+        .notification-item:hover { background: #f0f7ff; }
+        .notif-icon { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .icon-blue { background: #e3f2fd; color: #0277bd; }
+        .icon-yellow { background: #fff9e6; color: #d4a017; }
+        .notif-content h4 { margin-bottom: 5px; font-size: 1rem; }
+        .notif-content p { color: var(--text-muted); font-size: 0.9rem; }
+        .notif-time { margin-left: auto; font-size: 0.8rem; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span class="logo-text">VacciLink</span>
+        </div>
+        <nav class="nav-menu">
+            <div class="nav-item"><a href="dashboard.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg><span class="nav-text">Dashboard</span></a></div>
+            <div class="nav-item"><a href="timeline.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span class="nav-text">Vaccination Timeline</span></a></div>
+            <div class="nav-item"><a href="appointment.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span class="nav-text">Appointments</span></a></div>
+            <div class="nav-item"><a href="summary.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg><span class="nav-text">Records (Summary)</span></a></div>
+            <div class="nav-item"><a href="notifications.html" class="nav-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg><span class="nav-text">Alerts</span></a></div>
+            <div class="nav-item"><a href="profile.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span class="nav-text">Profile</span></a></div>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-bar">
+            <h2>Alerts & Reminders</h2>
+            <div class="user-actions">
+                <img src="../assets/images/parent-avatar.png" alt="User" class="profile-avatar">
+            </div>
+        </header>
+
+        <section class="card" style="padding: 0;">
+            <div class="notification-item">
+                <div class="notif-icon icon-blue">
+                    <svg viewBox="0 0 24 24" width="20" stroke="currentColor" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <div class="notif-content">
+                    <h4>Upcoming Vaccine Reminder: MR-1</h4>
+                    <p>Arya is due for the MR-1 vaccine on 28th Feb. Don't forget to visit XYZ Clinic.</p>
+                </div>
+                <span class="notif-time">2h ago</span>
+            </div>
+
+            <div class="notification-item">
+                <div class="notif-icon icon-yellow">
+                    <svg viewBox="0 0 24 24" width="20" stroke="currentColor" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line></svg>
+                </div>
+                <div class="notif-content">
+                    <h4>Appointment Confirmed</h4>
+                    <p>Your appointment at XYZ Clinic for 11th May is confirmed.</p>
+                </div>
+                <span class="notif-time">1d ago</span>
+            </div>
+
+            <div class="notification-item">
+                <div class="notif-icon icon-blue">
+                    <svg viewBox="0 0 24 24" width="20" stroke="currentColor" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+                <div class="notif-content">
+                    <h4>Record Updated Successfully</h4>
+                    <p>Hep-B Birth dose has been verified by the vaccinator.</p>
+                </div>
+                <span class="notif-time">3d ago</span>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

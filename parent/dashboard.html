@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - VacciLink</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/dashboard.css">
+
+</head>
+<body>
+
+<aside class="sidebar">
+
+<div class="sidebar-logo">
+<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+<span class="logo-text">VacciLink</span>
+</div>
+
+<nav class="nav-menu">
+
+<div class="nav-item">
+<a href="dashboard.html" class="nav-link active">
+<span class="nav-text">Dashboard</span>
+</a>
+</div>
+
+<div class="nav-item">
+<a href="timeline.html" class="nav-link">
+<span class="nav-text">Vaccination Timeline</span>
+</a>
+</div>
+
+<div class="nav-item">
+<a href="appointment.html" class="nav-link">
+<span class="nav-text">Appointments</span>
+</a>
+</div>
+
+<div class="nav-item">
+<a href="summary.html" class="nav-link">
+<span class="nav-text">Records (Summary)</span>
+</a>
+</div>
+
+<div class="nav-item">
+<a href="notifications.html" class="nav-link">
+<span class="nav-text">Alerts</span>
+</a>
+</div>
+
+<div class="nav-item">
+<a href="profile.html" class="nav-link">
+<span class="nav-text">Profile</span>
+</a>
+</div>
+
+</nav>
+
+</aside>
+
+
+
+<main class="main-content">
+
+<header class="top-bar">
+
+<div class="search-container">
+<input type="text" placeholder="Initiate search text...">
+</div>
+
+<div class="user-actions">
+<img src="../assets/images/parent-avatar.png" class="profile-avatar">
+<span class="user-name">English</span>
+</div>
+
+</header>
+
+
+<section class="welcome-section">
+<h2>Welcome back, <span id="parentName">Parent</span>!</h2>
+<p class="text-muted">Stay updated on <span id="childNameWelcome">child</span>'s health journey.</p>
+</section>
+
+
+
+<div class="dashboard-grid">
+
+<div class="grid-left">
+
+<div class="card baby-card">
+
+<div class="baby-info">
+
+<img src="../assets/images/baby-avatar.png" class="baby-photo">
+
+<div class="baby-details">
+
+<h3><span id="childNameText">Child Name</span> <span class="tag">Infant</span></h3>
+
+<p id="childDOB">Born -</p>
+
+<p id="childID">#----</p>
+
+<button class="btn-primary" onclick="location.href='profile.html'" style="margin-top:15px;">
+Go to Profile
+</button>
+
+</div>
+
+</div>
+
+<div class="qr-section">
+
+<img id="qrCode" class="qr-image">
+
+<p style="font-size:0.75rem;color:var(--text-muted);">Digital Health ID</p>
+
+</div>
+
+</div>
+
+
+
+<div class="status-row">
+
+<div class="card status-card completed">
+<h4>Completed Vaccines</h4>
+<span class="status-value">7</span>
+</div>
+
+<div class="card status-card upcoming">
+<h4>Upcoming Vaccines</h4>
+<span class="status-value">2</span>
+</div>
+
+<div class="card status-card overdue">
+<h4>Overdue Vaccines</h4>
+<span class="status-value">0</span>
+</div>
+
+</div>
+
+
+<div class="card" style="border-left:5px solid var(--primary-blue);">
+
+<h3 style="color:var(--primary-blue);">Next Vaccine: MR-1</h3>
+
+<p class="text-muted">Scheduled on February 28, 2026</p>
+
+</div>
+
+</div>
+
+
+
+<div class="grid-right">
+
+<div class="card parent-card">
+
+<img src="../assets/images/parent-avatar.png" class="parent-photo">
+
+<h3 id="parentNameCard">Parent Name</h3>
+
+<p class="text-muted" id="parentPhone">Phone</p>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>Recent Immunizations</h3>
+
+<div class="table-container">
+
+<table>
+
+<thead>
+<tr><th>NAME</th><th>STATUS</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>OPV-1</td>
+<td><span class="status-pill pill-upcoming">Upcoming</span></td>
+</tr>
+
+<tr>
+<td>Hep-B</td>
+<td><span class="status-pill pill-completed">Completed</span></td>
+</tr>
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</main>
+
+
+
+<script src="../js/vaccineSchedule.js"></script>
+<script>
+
+const email = localStorage.getItem("parentEmail");
+
+if(!email){
+window.location.href="login.html";
+}
+
+fetch("/parent/"+email)
+.then(res=>res.json())
+.then(data=>{
+
+if(!data || !data._id){
+window.location.href="login.html";
+return;
+}
+
+console.log(data);
+
+/* Parent info */
+
+document.getElementById("parentName").innerText =
+data.parentName || "Parent";
+
+document.getElementById("parentNameCard").innerText =
+data.parentName || "Parent";
+
+document.getElementById("parentPhone").innerText =
+data.phone || "Phone not added";
+
+/* Child info */
+
+document.getElementById("childNameText").innerText =
+data.childName || "Child";
+
+document.getElementById("childNameWelcome").innerText =
+data.childName || "Child";
+
+const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const dobParts = (data.childDOB || "").split("-");
+document.getElementById("childDOB").innerText =
+"Born - " + (dobParts.length === 3 ? dobParts[2]+" "+months[parseInt(dobParts[1])-1]+" "+dobParts[0] : "Not set");
+
+document.getElementById("childID").innerText =
+"#" + (data.childID || "----");
+
+/* QR Code */
+
+const qr =
+"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=VacciLink-"+
+(data.childID || "vaccilink");
+
+document.getElementById("qrCode").src = qr;
+
+/* Vaccination Logic */
+fetch("/vaccination/" + data.childID)
+.then(res=>res.json())
+.then(dbVaccines=>{
+
+const schedule = window.VacciLinkSchedule.generate(data.childDOB);
+const merged = window.VacciLinkSchedule.mergeWithHistory(schedule, dbVaccines);
+
+let completedCount = 0;
+let upcomingCount = 0;
+let overdueCount = 0;
+let nextVaccine = null;
+
+merged.forEach(v => {
+if (v.status === "completed") completedCount++;
+else if (v.status === "overdue") overdueCount++;
+else if (v.status === "upcoming") {
+upcomingCount++;
+const vDate = new Date(v.scheduledDate);
+if (!nextVaccine || vDate < nextVaccine.date) {
+nextVaccine = { name: v.vaccineName, date: vDate };
+}
+}
+});
+
+const completedValue = document.querySelector(".status-card.completed .status-value");
+const upcomingValue = document.querySelector(".status-card.upcoming .status-value");
+const overdueValue = document.querySelector(".status-card.overdue .status-value");
+
+if (completedValue) completedValue.innerText = completedCount;
+if (upcomingValue) upcomingValue.innerText = upcomingCount;
+if (overdueValue) overdueValue.innerText = overdueCount;
+
+const nextVaccineCard = document.querySelector(".status-row").nextElementSibling;
+if (nextVaccineCard && nextVaccineCard.classList.contains("card")) {
+if (nextVaccine) {
+const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const formattedDate = monthNames[nextVaccine.date.getMonth()] + " " + nextVaccine.date.getDate() + ", " + nextVaccine.date.getFullYear();
+nextVaccineCard.querySelector("h3").innerText = "Next Vaccine: " + nextVaccine.name;
+nextVaccineCard.querySelector("p").innerText = "Scheduled on " + formattedDate;
+} else {
+nextVaccineCard.querySelector("h3").innerText = "All Vaccines Completed!";
+nextVaccineCard.querySelector("p").innerText = "No upcoming schedules.";
+}
+}
+
+// Update Recent Immunizations Table
+const tbody = document.querySelector(".table-container tbody");
+if(tbody) {
+    let tableHTML = "";
+    merged.slice(0, 5).forEach(v => {
+        let statusHTML = "";
+        if(v.status === "completed") statusHTML = `<span class="status-pill pill-completed">Completed</span>`;
+        else if(v.status === "overdue") statusHTML = `<span class="status-pill" style="background:#ffebee;color:#d32f2f;">Overdue</span>`;
+        else statusHTML = `<span class="status-pill pill-upcoming">Upcoming</span>`;
+        tableHTML += `<tr><td>${v.vaccineName}</td><td>${statusHTML}</td></tr>`;
+    });
+    tbody.innerHTML = tableHTML;
+}
+
+});
+
+});
+
+</script>
+</body>
+</html>
