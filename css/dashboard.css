@@ -367,6 +367,79 @@ td {
 .pill-upcoming { background: #fff9e6; color: #d4a017; }
 .pill-completed { background: #e6fffa; color: #2d3748; }
 
+/* FullCalendar Overrides */
+.fc {
+    border-radius: 16px;
+    background: var(--white);
+    padding: 10px;
+}
+.fc-toolbar-title {
+    font-size: 1.25rem !important;
+    color: var(--primary-blue);
+    font-weight: 700;
+}
+.fc-button-primary {
+    background-color: var(--light-blue) !important;
+    color: var(--primary-blue) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    text-transform: capitalize !important;
+    transition: all 0.2s;
+}
+.fc-button-primary:hover, .fc-button-active {
+    background-color: var(--primary-blue) !important;
+    color: var(--white) !important;
+}
+.fc-daygrid-event {
+    border-radius: 6px;
+    padding: 3px 6px;
+    border: none !important;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85em;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.fc-tooltip {
+    position: absolute;
+    z-index: 9999;
+    background: var(--white);
+    border: 1px solid #edf2f7;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    pointer-events: none;
+    line-height: 1.5;
+}
+
+/* Calendar Legend & Help */
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+.legend-item:last-child {
+    margin-bottom: 0;
+}
+.legend-circle {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.legend-info h4 {
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+    color: var(--text-dark);
+}
+.legend-info p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
 /* Buttons */
 .btn-primary {
     background-color: var(--primary-blue);

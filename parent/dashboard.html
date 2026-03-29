@@ -7,6 +7,7 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/dashboard.css">
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
 
 </head>
 <body>
@@ -151,6 +152,16 @@ Go to Profile
 
 </div>
 
+<div class="card" style="margin-top: 20px;">
+<h3>Vaccination Calendar</h3>
+<div id="vaccineCalendar" style="margin-top:15px; font-size: 0.9em;"></div>
+<p class="text-muted" style="text-align: center; margin-top: 20px; font-size: 0.85rem;">Click on any date to view details or book an appointment.</p>
+<button class="btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 15px; padding: 12px;" onclick="location.href='appointment.html'">
+    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+    Book New Appointment
+</button>
+</div>
+
 </div>
 
 
@@ -197,6 +208,50 @@ Go to Profile
 
 </div>
 
+</div>
+
+<div class="card">
+    <h3>Calendar Legend</h3>
+    <div style="margin-top: 20px;">
+        <div class="legend-item">
+            <div class="legend-circle" style="background:#27ae60;"></div>
+            <div class="legend-info">
+                <h4>Scheduled</h4>
+                <p>Appointment booked</p>
+            </div>
+        </div>
+        <div class="legend-item">
+            <div class="legend-circle" style="background:#0277bd;"></div>
+            <div class="legend-info">
+                <h4>Upcoming</h4>
+                <p>Due date is near</p>
+            </div>
+        </div>
+        <div class="legend-item">
+            <div class="legend-circle" style="background:#e74c3c;"></div>
+            <div class="legend-info">
+                <h4>Overdue</h4>
+                <p>Immediate action needed</p>
+            </div>
+        </div>
+        <div class="legend-item">
+            <div class="legend-circle" style="background:#95a5a6;"></div>
+            <div class="legend-info">
+                <h4>Completed</h4>
+                <p>Vaccine already taken</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Need Help?</h3>
+    <p class="text-muted" style="margin-top:5px; font-size: 0.9rem;">Call our vaccination support helpline.</p>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:15px; background:var(--light-blue); padding:12px; border-radius:8px;">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--primary-blue)" stroke-width="2" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+        <span style="font-weight:700; color:var(--primary-blue); font-size: 1.1rem;">1800-123-4567</span>
+    </div>
+    <button class="btn-primary btn-full" style="margin-top:15px; padding: 12px;" onclick="location.href='appointment.html'">Book Appointment</button>
 </div>
 
 </div>
@@ -278,11 +333,11 @@ let nextVaccine = null;
 merged.forEach(v => {
 if (v.status === "completed") completedCount++;
 else if (v.status === "overdue") overdueCount++;
-else if (v.status === "upcoming") {
-upcomingCount++;
+else if (v.status === "upcoming" || v.status === "scheduled") {
+if(v.status === "upcoming") upcomingCount++;
 const vDate = new Date(v.scheduledDate);
 if (!nextVaccine || vDate < nextVaccine.date) {
-nextVaccine = { name: v.vaccineName, date: vDate };
+nextVaccine = { name: v.vaccineName, date: vDate, status: v.status };
 }
 }
 });
@@ -306,6 +361,77 @@ nextVaccineCard.querySelector("p").innerText = "Scheduled on " + formattedDate;
 nextVaccineCard.querySelector("h3").innerText = "All Vaccines Completed!";
 nextVaccineCard.querySelector("p").innerText = "No upcoming schedules.";
 }
+}
+
+// Render Calendar
+const calendarEl = document.getElementById('vaccineCalendar');
+if(calendarEl) {
+    const eventsArray = merged.map(v => {
+        let evColor = "#0277bd";
+        let evTitle = "Upcoming: " + v.vaccineName;
+        let pStatus = "Upcoming";
+        
+        if(v.status === "scheduled") {
+            evColor = "#27ae60";
+            evTitle = "Appointment: " + v.vaccineName;
+            pStatus = "Scheduled";
+        } else if(v.status === "overdue") {
+            evColor = "#e74c3c";
+            evTitle = "Overdue: " + v.vaccineName;
+            pStatus = "Overdue";
+        } else if(v.status === "completed") {
+            evColor = "#95a5a6";
+            evTitle = "Completed: " + v.vaccineName;
+            pStatus = "Completed";
+        }
+
+        const dateToUse = v.scheduledDate ? new Date(v.scheduledDate) : new Date(v.dueDate);
+        const pad = n => String(n).padStart(2, '0');
+        const startStr = dateToUse.getFullYear() + '-' + pad(dateToUse.getMonth() + 1) + '-' + pad(dateToUse.getDate());
+        
+        let displayHospital = v.hospital ? v.hospital : "";
+        
+        return {
+            title: evTitle,
+            start: startStr,
+            color: evColor,
+            extendedProps: { name: v.vaccineName, dose: v.doseNumber, statusStr: pStatus, hospital: displayHospital }
+        };
+    });
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'title',
+            right: 'today dayGridMonth,timeGridWeek,listWeek'
+        },
+        events: eventsArray,
+        eventClick: function(info) {
+            window.location.href = `appointment.html?vaccineName=${encodeURIComponent(info.event.extendedProps.name)}&doseNumber=${info.event.extendedProps.dose}`;
+        },
+        eventMouseEnter: function(info) {
+            let tooltipStr = `<strong style="color:var(--primary-blue); font-size:1rem;">${info.event.extendedProps.name}</strong><br>Status: <strong>${info.event.extendedProps.statusStr}</strong>`;
+            
+            if (info.event.extendedProps.statusStr === "Scheduled") {
+                tooltipStr += `<br>Time: 10:30 AM`;
+                if (info.event.extendedProps.hospital) tooltipStr += `<br>Hospital: ${info.event.extendedProps.hospital}`;
+            }
+
+            let tooltipEl = document.createElement('div');
+            tooltipEl.className = 'fc-tooltip';
+            tooltipEl.innerHTML = tooltipStr;
+            document.body.appendChild(tooltipEl);
+            
+            info.el.addEventListener('mousemove', function(e) {
+                tooltipEl.style.top = (e.pageY + 15) + 'px';
+                tooltipEl.style.left = (e.pageX + 15) + 'px';
+            });
+            info.el.addEventListener('mouseleave', function() {
+                tooltipEl.remove();
+            });
+        }
+    });
+    calendar.render();
 }
 
 // Update Recent Immunizations Table

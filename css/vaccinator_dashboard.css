@@ -195,6 +195,23 @@ body {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.child-card-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.child-card-list::-webkit-scrollbar-track {
+    background: var(--light-green);
+    border-radius: 10px;
+}
+
+.child-card-list::-webkit-scrollbar-thumb {
+    background: var(--text-muted);
+    border-radius: 10px;
 }
 
 .child-item {

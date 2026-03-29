@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,29 +8,101 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/dashboard.css">
     <style>
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark); }
-        .form-control { width: 100%; padding: 12px; border: 1px solid #edf2f7; border-radius: 8px; outline: none; transition: border-color 0.3s; }
-        .form-control:focus { border-color: var(--primary-blue); }
-        .slot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .slot-btn { padding: 10px; border: 1px solid var(--primary-blue); border-radius: 8px; background: var(--white); color: var(--primary-blue); cursor: pointer; transition: all 0.3s; }
-        .slot-btn.active { background: var(--primary-blue); color: var(--white); }
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #edf2f7;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .slot-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .slot-btn {
+            padding: 10px;
+            border: 1px solid var(--primary-blue);
+            border-radius: 8px;
+            background: var(--white);
+            color: var(--primary-blue);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .slot-btn.active {
+            background: var(--primary-blue);
+            color: var(--white);
+        }
     </style>
 </head>
+
 <body>
 
     <aside class="sidebar">
         <div class="sidebar-logo">
-            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
             <span class="logo-text">VacciLink</span>
         </div>
         <nav class="nav-menu">
-            <div class="nav-item"><a href="dashboard.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg><span class="nav-text">Dashboard</span></a></div>
-            <div class="nav-item"><a href="timeline.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span class="nav-text">Vaccination Timeline</span></a></div>
-            <div class="nav-item"><a href="appointment.html" class="nav-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span class="nav-text">Appointments</span></a></div>
-            <div class="nav-item"><a href="summary.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg><span class="nav-text">Records (Summary)</span></a></div>
-            <div class="nav-item"><a href="notifications.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg><span class="nav-text">Alerts</span></a></div>
-            <div class="nav-item"><a href="profile.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span class="nav-text">Profile</span></a></div>
+            <div class="nav-item"><a href="dashboard.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg><span class="nav-text">Dashboard</span></a></div>
+            <div class="nav-item"><a href="timeline.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg><span class="nav-text">Vaccination Timeline</span></a></div>
+            <div class="nav-item"><a href="appointment.html" class="nav-link active"><svg viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg><span class="nav-text">Appointments</span></a></div>
+            <div class="nav-item"><a href="summary.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg><span class="nav-text">Records (Summary)</span></a></div>
+            <div class="nav-item"><a href="notifications.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg><span class="nav-text">Alerts</span></a></div>
+            <div class="nav-item"><a href="profile.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg><span class="nav-text">Profile</span></a></div>
         </nav>
     </aside>
 
@@ -80,8 +153,21 @@
         </section>
     </main>
 
+    <script src="../js/vaccineSchedule.js"></script>
+
     <script>
-        // Use active class for time slots (beginner friendly script)
+
+        const email = localStorage.getItem("parentEmail");
+
+        if (!email) {
+            window.location.href = "login.html";
+        }
+
+        let currentChildID = null;
+        let childDOB = null;
+
+        /* SLOT BUTTON LOGIC */
+
         const buttons = document.querySelectorAll('.slot-btn');
         buttons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -89,69 +175,253 @@
                 btn.classList.add('active');
             });
         });
-        
-        const email = localStorage.getItem("parentEmail");
-        if(!email) window.location.href="login.html";
-        let currentChildID = null;
+
+        /* FETCH PARENT */
 
         fetch("/parent/" + email)
-        .then(res => res.json())
-        .then(parent => {
-            if(!parent) return;
-            currentChildID = parent.childID;
-            return fetch("/vaccination/" + parent.childID);
-        })
-        .then(res => res.json())
-        .then(vaccines => {
-            const select = document.querySelector("select.form-control");
-            select.innerHTML = "";
-            
-            const params = new URLSearchParams(window.location.search);
-            const preFillName = params.get('vaccineName');
-            const preFillDose = params.get('doseNumber');
-            
-            vaccines.forEach(v => {
-                if (v.status === "upcoming" || v.status === "overdue" || (v.vaccineName === preFillName && v.doseNumber == preFillDose)) {
-                    const opt = document.createElement("option");
-                    opt.value = JSON.stringify({ name: v.vaccineName, dose: v.doseNumber });
-                    opt.innerText = `${v.vaccineName} (Dose ${v.doseNumber}) - ${v.status}`;
-                    if (v.vaccineName === preFillName && v.doseNumber == preFillDose) {
-                        opt.selected = true;
-                    }
-                    select.appendChild(opt);
+
+            .then(res => res.json())
+
+            .then(parent => {
+
+                if (!parent) {
+                    window.location.href = "login.html";
+                    return;
                 }
+
+                currentChildID = parent.childID;
+                childDOB = parent.childDOB;
+
+                /* Load nearby clinics */
+
+                const parentAddress = `${parent.address}, ${parent.city}`;
+                fetchNearbyClinics(parentAddress);
+
+                /* Fetch vaccination history */
+
+                return fetch("/vaccination/" + parent.childID);
+
+            })
+
+            .then(res => res.json())
+
+            .then(dbVaccines => {
+
+                /* Generate full schedule */
+
+                const schedule =
+                    window.VacciLinkSchedule.generate(childDOB);
+
+                /* Merge schedule + database */
+
+                const merged =
+                    window.VacciLinkSchedule.mergeWithHistory(schedule, dbVaccines);
+
+                /* Vaccine dropdown */
+
+                const select =
+                    document.querySelectorAll("select.form-control")[0];
+
+                select.innerHTML = "";
+
+                /* Only allow overdue + first upcoming */
+
+                let foundUpcoming = false;
+
+                /* Sort by due date */
+
+                merged.sort((a, b) =>
+                    new Date(a.dueDate) - new Date(b.dueDate)
+                );
+
+                merged.forEach(v => {
+
+                    if (v.status === "completed" || v.status === "scheduled") return;
+
+                    if (v.status === "upcoming") {
+
+                        if (foundUpcoming) return;
+
+                        foundUpcoming = true;
+
+                    }
+
+                    const opt = document.createElement("option");
+
+                    opt.value = JSON.stringify({
+
+                        name: v.vaccineName,
+                        dose: v.doseNumber
+
+                    });
+
+                    if (v.status === "overdue") {
+
+                        opt.innerText =
+                            `${v.vaccineName}-${v.doseNumber} (Overdue)`;
+
+                    }
+
+                    else {
+
+                        opt.innerText =
+                            `${v.vaccineName}-${v.doseNumber} (Upcoming)`;
+
+                    }
+
+                    select.appendChild(opt);
+
+                });
+
+                if (select.children.length === 0) {
+
+                    select.innerHTML =
+                        "<option disabled>All vaccines completed</option>";
+
+                }
+
             });
-            
-            if(select.children.length === 0) {
-                select.innerHTML = "<option disabled>All vaccines completed</option>";
+
+        /* FETCH NEARBY CLINICS */
+
+        async function fetchNearbyClinics(address) {
+
+            const clinicSelect =
+                document.querySelectorAll("select.form-control")[1];
+
+            clinicSelect.innerHTML =
+                "<option disabled selected>Loading nearby clinics...</option>";
+
+            try {
+
+                const res =
+                    await fetch(`/nearby-clinics?address=${encodeURIComponent(address)}`);
+
+                const clinics = await res.json();
+
+                if (clinics.length === 0) {
+
+                    clinicSelect.innerHTML =
+                        "<option disabled>No clinics found nearby</option>";
+
+                    return;
+
+                }
+
+                clinicSelect.innerHTML = "";
+
+                clinics.forEach(clinic => {
+
+                    const opt = document.createElement("option");
+
+                    opt.value = JSON.stringify({
+
+                        name: clinic.name,
+                        address: clinic.address,
+                        distance: clinic.distance
+
+                    });
+
+                    opt.innerText =
+                        `${clinic.name} - ${clinic.distance}`;
+
+                    clinicSelect.appendChild(opt);
+
+                });
+
+            } catch (err) {
+
+                console.error(err);
+
+                clinicSelect.innerHTML =
+                    "<option disabled>Error loading clinics</option>";
+
             }
-        });
+
+        }
+
+        /* BOOK APPOINTMENT */
 
         async function bookAppointment() {
-            const selectObj = document.querySelector("select.form-control");
-            if(selectObj.selectedIndex < 0 || selectObj.children[0].disabled) return alert("Please select a valid vaccine");
-            
-            const val = JSON.parse(selectObj.value);
-            const dateInput = document.querySelector("input[type='date']").value;
-            const clinicSelect = document.querySelectorAll("select.form-control")[1].value;
-            
-            if(!dateInput || !clinicSelect) return alert("Please fill all details");
-            
+
+            const vaccineSelect =
+                document.querySelectorAll("select.form-control")[0];
+
+            if (
+                vaccineSelect.selectedIndex < 0 ||
+                vaccineSelect.children[0].disabled
+            ) {
+
+                return alert("Please select a valid vaccine");
+
+            }
+
+            const vaccineData =
+                JSON.parse(vaccineSelect.value);
+
+            const dateInput =
+                document.querySelector("input[type='date']").value;
+
+            const clinicSelect =
+                document.querySelectorAll("select.form-control")[1];
+
+            let clinicVal;
+
+            try {
+
+                clinicVal = JSON.parse(clinicSelect.value);
+
+            } catch {
+
+                return alert("Please select a clinic");
+
+            }
+
+            if (!dateInput) {
+
+                return alert("Please select appointment date");
+
+            }
+
             const res = await fetch("/vaccination/add", {
+
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
                 body: JSON.stringify({
+
                     childID: currentChildID,
-                    vaccineName: val.name,
-                    doseNumber: val.dose,
+
+                    vaccineName: vaccineData.name,
+
+                    doseNumber: vaccineData.dose,
+
                     scheduledDate: dateInput,
-                    hospital: clinicSelect
+
+                    hospital: clinicVal.name,
+
+                    hospitalAddress: clinicVal.address,
+
+                    distance: clinicVal.distance,
+
+                    status: "scheduled"
+
                 })
+
             });
+
             const data = await res.json();
+
             alert(data.message);
-            window.location.href = "summary.html";
+
+            window.location.href = "dashboard.html";
+
         }
+
     </script>
 </body>
+
 </html>

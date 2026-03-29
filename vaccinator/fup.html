@@ -57,51 +57,127 @@
     <main class="main-content">
         <header class="welcome-header">
             <h1>Lost to Follow-Up</h1>
-            <p>Track and manage children who have missed 2 consecutive sessions</p>
+            <p>Track and manage children who have missed or overdue vaccinations</p>
         </header>
 
         <div class="dashboard-grid" style="grid-template-columns: 1fr;">
             <div class="card">
-                <h3>Children Missing 2 Consecutive Sessions</h3>
+                <h3>Children with Overdue / Missed Vaccinations</h3>
                 
                 <table class="child-list-table">
                     <thead>
                         <tr>
                             <th>Child Name</th>
-                            <th>Age</th>
-                            <th>Last Visit Date</th>
+                            <th>Age Group</th>
+                            <th>Vaccine (Dose)</th>
+                            <th>Last Visit</th>
+                            <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr class="missed-entry">
-                            <td>Aarav Sharma</td>
-                            <td>1.5 Years</td>
-                            <td>January 15, 2026</td>
-                        </tr>
-                        <tr class="missed-entry">
-                            <td>Suhana Khan</td>
-                            <td>9 Months</td>
-                            <td>November 10, 2025</td>
-                        </tr>
-                        <tr class="missed-entry">
-                            <td>Vivaan Reddy</td>
-                            <td>1 Year</td>
-                            <td>December 05, 2025</td>
-                        </tr>
-                        <tr class="missed-entry">
-                            <td>Rahul Verma</td>
-                            <td>2 Years</td>
-                            <td>January 12, 2026</td>
-                        </tr>
+                    <tbody id="followupTableBody">
+                        <tr><td colspan="6" style="text-align:center; padding:20px;">Loading follow-up data...</td></tr>
                     </tbody>
                 </table>
 
                 <div style="margin-top: 30px; display: flex; justify-content: flex-end;">
-                  <button class="btn btn-qr" style="background-color: var(--primary-green); padding: 12px 25px;">Export Follow-Up List</button>
+                  <button class="btn btn-primary" onclick="exportToCSV()" style="padding: 12px 25px;">Export Follow-Up List (CSV)</button>
                 </div>
             </div>
         </div>
     </main>
+
+    <script>
+        let followupData = [];
+
+        async function fetchFollowupData() {
+            try {
+                const res = await fetch('/vaccinator/followup');
+                followupData = await res.json();
+                renderFollowup(followupData);
+            } catch (err) {
+                console.error("Fetch error:", err);
+            }
+        }
+
+        function renderFollowup(data) {
+            const body = document.getElementById('followupTableBody');
+            body.innerHTML = '';
+
+            if (data.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No children currently lost to follow-up</td></tr>';
+                return;
+            }
+
+            data.forEach((child, index) => {
+                const row = document.createElement('tr');
+                if (child.status === 'Overdue') row.className = 'missed-entry';
+                
+                row.innerHTML = `
+                    <td>${child.childName}<br/><small>ID: #${child.childID}</small></td>
+                    <td>${child.age}</td>
+                    <td>${child.vaccineName} (Dose ${child.doseNumber})</td>
+                    <td>${child.lastVisitDate}</td>
+                    <td><span class="status-badge overdue">${child.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="sendReminder(${index}, this)">Send Reminder</button>
+                    </td>
+                `;
+                body.appendChild(row);
+            });
+        }
+
+        async function sendReminder(index, btn) {
+            const child = followupData[index];
+            const originalText = btn.innerText;
+            btn.innerText = 'Sending...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/vaccinator/send-reminder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        childName: child.childName,
+                        parentEmail: child.parentEmail,
+                        vaccineName: child.vaccineName,
+                        doseNumber: child.doseNumber,
+                        dueDate: child.dueDate
+                    })
+                });
+                const result = await res.json();
+                alert(result.message);
+                btn.innerText = 'Sent';
+                btn.style.backgroundColor = '#66bb6a';
+            } catch (err) {
+                console.error("Reminder error:", err);
+                alert("Failed to send reminder");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function exportToCSV() {
+            if (followupData.length === 0) return alert("No data to export");
+
+            let csv = "Child Name,Child ID,Age Group,Vaccine,Dose,Due Date,Last Visit,Parent Email,Parent Phone,Status\n";
+            followupData.forEach(c => {
+                csv += `"${c.childName}","${c.childID}","${c.age}","${c.vaccineName}","${c.doseNumber}","${c.dueDate}","${c.lastVisitDate}","${c.parentEmail}","${c.parentPhone}","${c.status}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'followup_list.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        fetchFollowupData();
+    </script>
 
 </body>
 </html>

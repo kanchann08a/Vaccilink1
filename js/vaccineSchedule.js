@@ -106,10 +106,20 @@ window.VacciLinkSchedule = {
             let status = "upcoming";
             let dateTaken = null;
             let hospital = "";
+            let scheduledDate = sch.scheduledDate;
 
-            if (dbRecord && dbRecord.dateTaken) {
-                status = "completed";
-                dateTaken = new Date(dbRecord.dateTaken);
+            if (dbRecord) {
+                if (dbRecord.dateTaken) {
+                    status = "completed";
+                    dateTaken = new Date(dbRecord.dateTaken);
+                } else if (dbRecord.status === "scheduled") {
+                    status = "scheduled";
+                    if(dbRecord.scheduledDate) scheduledDate = new Date(dbRecord.scheduledDate);
+                } else {
+                    if (today > sch.scheduledDate) {
+                        status = "overdue";
+                    }
+                }
                 hospital = dbRecord.hospital || "";
             } else {
                 if (today > sch.scheduledDate) {
@@ -119,6 +129,8 @@ window.VacciLinkSchedule = {
 
             return {
                 ...sch,
+                scheduledDate: scheduledDate,
+                dueDate: sch.scheduledDate,
                 status: status,
                 dateTaken: dateTaken,
                 hospital: hospital

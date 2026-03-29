@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Child Profile - VacciLink</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/vaccinator_dashboard.css">
+    <style>
+        .profile-header {
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .info-item label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+        .info-item span {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .timeline-container {
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+        }
+        .timeline-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .timeline-item:last-child { border-bottom: none; }
+        .vaccine-info h4 { margin-bottom: 5px; color: var(--primary-green); }
+        .vaccine-info p { font-size: 0.85rem; color: #666; }
+        .actions { display: flex; gap: 10px; }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .modal-header { margin-bottom: 20px; }
+        .modal-footer { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <span>VacciLink</span>
+        </div>
+        <div class="vaccinator-profile">
+            <div class="profile-img">SY</div>
+            <div>
+                <h4>Seema Yadav</h4>
+                <p>Vaccinator</p>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="sessions.html" class="nav-link">Vaccinator Session</a>
+            <a href="schedule.html" class="nav-link">Vaccination Schedule</a>
+            <a href="fup.html" class="nav-link">Lost to Follow-Up</a>
+            <a href="appointment.html" class="nav-link">Appointment</a>
+            <a href="profile.html" class="nav-link">Profile</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="welcome-header">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <button onclick="history.back()" class="btn btn-sm btn-secondary" style="padding:8px;"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg></button>
+                <h1>Child Profile</h1>
+            </div>
+        </header>
+
+        <section id="childProfileHeader" class="profile-header">
+            <div style="width:100%;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <h2 id="childNameTitle" style="color:var(--primary-green); font-size:1.8rem;">Loading...</h2>
+                    <span id="childIDBadge" class="status-badge" style="background:var(--light-green); color:var(--primary-green); padding:8px 15px;">ID: #---</span>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item"><label>Date of Birth</label><span id="childDOB">---</span></div>
+                    <div class="info-item"><label>Parent Name</label><span id="parentName">---</span></div>
+                    <div class="info-item"><label>Phone Number</label><span id="parentPhone">---</span></div>
+                    <div class="info-item"><label>Address</label><span id="parentAddress">---</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="timeline-container">
+            <div class="section-title">
+                <h3>Vaccination Timeline</h3>
+                <div class="filter-tabs">
+                    <button class="btn btn-sm btn-secondary active" onclick="filterTimeline('All')">All</button>
+                    <button class="btn btn-sm btn-secondary" onclick="filterTimeline('completed')">Completed</button>
+                    <button class="btn btn-sm btn-secondary" onclick="filterTimeline('pending')">Pending</button>
+                </div>
+            </div>
+            <div id="vaccinationTimeline">
+                <p style="text-align:center; padding:40px; color:#888;">Loading timeline...</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Reschedule Modal -->
+    <div id="rescheduleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Reschedule Vaccination</h3>
+                <p id="modalVaccineName" style="font-size:0.9rem; color:#666;"></p>
+            </div>
+            <div class="modal-body">
+                <label style="display:block; margin-bottom:8px; font-size:0.9rem;">Select New Date:</label>
+                <input type="date" id="newDateInput" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-sm btn-primary" onclick="confirmReschedule()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const childId = urlParams.get('childId');
+        let fullHistory = [];
+        let currentTimelineFilter = 'All';
+        let activeVaccine = null;
+
+        async function fetchChildData() {
+            if (!childId) return;
+            try {
+                const res = await fetch(`http://localhost:3000/child/${childId}`);
+                const data = await res.json();
+                
+                document.getElementById('childNameTitle').innerText = data.childName;
+                document.getElementById('childIDBadge').innerText = `ID: #${data.childID}`;
+                document.getElementById('childDOB').innerText = new Date(data.dob).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                document.getElementById('parentName').innerText = data.parentName;
+                document.getElementById('parentPhone').innerText = data.parentPhone;
+                document.getElementById('parentAddress').innerText = data.address;
+
+                fullHistory = data.vaccinationHistory;
+                renderTimeline();
+            } catch (err) {
+                console.error("Error fetching child profile:", err);
+            }
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('vaccinationTimeline');
+            container.innerHTML = "";
+
+            const filtered = fullHistory.filter(v => {
+                if (currentTimelineFilter === 'All') return true;
+                if (currentTimelineFilter === 'completed') return v.status === 'completed';
+                return v.status !== 'completed';
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<p style="text-align:center; padding:40px; color:#888;">No records found matching the filter.</p>`;
+                return;
+            }
+
+            filtered.forEach(v => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                
+                let statusColor = '#2e7d32'; // Green
+                if (v.status === 'overdue') statusColor = '#c62828'; // Red
+                if (v.status === 'upcoming' || v.status === 'scheduled') statusColor = '#283593'; // Blue
+                
+                const dateText = v.status === 'completed' 
+                    ? `Taken on: ${new Date(v.dateTaken).toLocaleDateString()}`
+                    : `Scheduled: ${new Date(v.scheduledDate || v.dueDate).toLocaleDateString()}`;
+
+                item.innerHTML = `
+                    <div class="vaccine-info">
+                        <h4>${v.vaccineName} <small style="color:#888; font-weight:normal;">(Dose ${v.doseNumber})</small></h4>
+                        <p>${dateText} | <span style="color:${statusColor}; font-weight:600; text-transform:capitalize;">${v.status}</span></p>
+                    </div>
+                    <div class="actions">
+                        ${v.status === 'completed' ? `
+                            <button class="btn btn-sm btn-secondary" onclick="updateStatus('${v.vaccineName}', ${v.doseNumber}, 'uncomplete')">Undo</button>
+                        ` : `
+                            <button class="btn btn-sm btn-secondary" onclick="openRescheduleModal('${v.vaccineName}', ${v.doseNumber})">Reschedule</button>
+                            <button class="btn btn-sm btn-primary" onclick="updateStatus('${v.vaccineName}', ${v.doseNumber}, 'complete')">Mark Completed</button>
+                        `}
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        async function updateStatus(vaccineName, doseNumber, action) {
+            const endpoint = action === 'complete' ? 'complete' : 'uncomplete';
+            try {
+                const res = await fetch(`http://localhost:3000/vaccination/${endpoint}/${childId}/${vaccineName}/${doseNumber}`, {
+                    method: 'PUT'
+                });
+                if (res.ok) {
+                    fetchChildData();
+                }
+            } catch (err) {
+                console.error(`Error performing ${action}:`, err);
+            }
+        }
+
+        function openRescheduleModal(vaccineName, doseNumber) {
+            activeVaccine = { vaccineName, doseNumber };
+            document.getElementById('modalVaccineName').innerText = `${vaccineName} (Dose ${doseNumber})`;
+            document.getElementById('rescheduleModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('rescheduleModal').style.display = 'none';
+        }
+
+        async function confirmReschedule() {
+            const newDate = document.getElementById('newDateInput').value;
+            if (!newDate) return alert("Please select a date");
+
+            try {
+                const res = await fetch(`http://localhost:3000/vaccination/reschedule/${childId}/${activeVaccine.vaccineName}/${activeVaccine.doseNumber}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newDate })
+                });
+                if (res.ok) {
+                    closeModal();
+                    fetchChildData();
+                }
+            } catch (err) {
+                console.error("Error rescheduling:", err);
+            }
+        }
+
+        function filterTimeline(status) {
+            currentTimelineFilter = status;
+            document.querySelectorAll('.filter-tabs .btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.innerText.toLowerCase() === status.toLowerCase()) btn.classList.add('active');
+            });
+            renderTimeline();
+        }
+
+        window.onload = fetchChildData;
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('rescheduleModal')) closeModal();
+        }
+    </script>
+</body>
+</html>

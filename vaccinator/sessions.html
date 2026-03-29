@@ -14,12 +14,44 @@
         }
         .month-card:hover {
             transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(46, 125, 50, 0.15);
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 70%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-muted);
         }
         .child-list-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            display: none;
         }
         .child-list-table th, .child-list-table td {
             padding: 12px;
@@ -28,6 +60,8 @@
         }
         .child-list-table th {
             background-color: var(--light-green);
+            position: sticky;
+            top: 0;
         }
     </style>
 </head>
@@ -61,88 +95,110 @@
     <!-- MAIN CONTENT -->
     <main class="main-content">
         <header class="welcome-header">
-            <h1>Vaccinator Sessions</h1>
-            <p>View and manage vaccination session records by month</p>
+            <h1>Upcoming Vaccinations</h1>
+            <p>View and manage upcoming vaccination sessions by month</p>
         </header>
 
         <div class="dashboard-grid" style="grid-template-columns: 1fr;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
-                <!-- Current Month -->
-                <div class="card month-card" onclick="showChildren('March 2026')">
-                    <h3 style="color: var(--primary-green);">March 2026</h3>
-                    <p style="margin-top: 10px; font-size: 1.1rem;">Children Vaccinated: <strong>45</strong></p>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">(Current Month)</p>
-                </div>
-
-                <!-- Last Month -->
-                <div class="card month-card" onclick="showChildren('February 2026')">
-                    <h3 style="color: var(--primary-green);">February 2026</h3>
-                    <p style="margin-top: 10px; font-size: 1.1rem;">Children Vaccinated: <strong>120</strong></p>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">(Last Month)</p>
-                </div>
-
-                <!-- Previous Month -->
-                <div class="card month-card" onclick="showChildren('January 2026')">
-                    <h3 style="color: var(--primary-green);">January 2026</h3>
-                    <p style="margin-top: 10px; font-size: 1.1rem;">Children Vaccinated: <strong>98</strong></p>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">(Previous Month)</p>
-                </div>
-            </div>
-
-            <div id="childrenListSection" class="card" style="display: none;">
-                <h3 id="selectedMonthTitle">Children List</h3>
-                <table class="child-list-table" id="childTable" style="display: table;">
-                    <thead>
-                        <tr>
-                            <th>Child Name</th>
-                            <th>ID</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="childTableBody">
-                        <!-- Data will be inserted here -->
-                    </tbody>
-                </table>
+            <div id="monthCardsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
+                <!-- Dynamic Month Cards will be inserted here -->
+                <div style="text-align:center; padding:50px; grid-column: 1/-1; color:var(--text-muted);">Loading monthly sessions...</div>
             </div>
         </div>
     </main>
 
+    <!-- Modal for Children List -->
+    <div id="childModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle" style="color: var(--primary-green);">Upcoming Children</h3>
+            <table class="child-list-table">
+                <thead>
+                    <tr>
+                        <th>Child Name</th>
+                        <th>ID</th>
+                        <th>Vaccine</th>
+                        <th>Dose</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="modalTableBody">
+                    <!-- Data here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <script>
-        const dummyData = {
-            'March 2026': [
-                { name: 'Aarav Sharma', id: '#990123', date: 'March 15, 2026' },
-                { name: 'Ishani Gupta', id: '#990456', date: 'March 14, 2026' }
-            ],
-            'February 2026': [
-                { name: 'Vivaan Reddy', id: '#990789', date: 'Feb 20, 2026' },
-                { name: 'Suhana Khan', id: '#990998', date: 'Feb 18, 2026' }
-            ],
-            'January 2026': [
-                { name: 'Rahul Verma', id: '#990222', date: 'Jan 10, 2026' },
-                { name: 'Ananya S.', id: '#990333', date: 'Jan 12, 2026' }
-            ]
-        };
+        let monthlyData = [];
 
-        function showChildren(month) {
-            const section = document.getElementById('childrenListSection');
-            const title = document.getElementById('selectedMonthTitle');
-            const body = document.getElementById('childTableBody');
+        async function fetchMonthlyData() {
+            try {
+                const res = await fetch('/vaccinator/monthly');
+                monthlyData = await res.json();
+                renderMonthCards(monthlyData);
+            } catch (err) {
+                console.error("Fetch error:", err);
+            }
+        }
 
-            title.innerText = `Children Vaccinated in ${month}`;
+        function renderMonthCards(data) {
+            const grid = document.getElementById('monthCardsGrid');
+            grid.innerHTML = '';
+
+            if (data.length === 0) {
+                grid.innerHTML = '<div style="text-align:center; padding:50px; grid-column: 1/-1; color:var(--text-muted);">No upcoming vaccinations found</div>';
+                return;
+            }
+
+            data.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card month-card';
+                card.onclick = () => openModal(index);
+                card.innerHTML = `
+                    <h3 style="color: var(--primary-green);">${item.month}</h3>
+                    <p style="margin-top: 10px; font-size: 1.1rem;">Upcoming Vaccinations: <strong>${item.count}</strong></p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">(Click to view details)</p>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openModal(index) {
+            const item = monthlyData[index];
+            const modal = document.getElementById('childModal');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalTableBody');
+
+            title.innerText = `Upcoming Vaccinations in ${item.month}`;
             body.innerHTML = '';
 
-            dummyData[month].forEach(child => {
+            item.children.forEach(child => {
                 const row = `<tr>
-                    <td>${child.name}</td>
-                    <td>${child.id}</td>
+                    <td>${child.childName}</td>
+                    <td>#${child.childID}</td>
+                    <td>${child.vaccineName}</td>
+                    <td>${child.doseNumber}</td>
                     <td>${child.date}</td>
                 </tr>`;
                 body.innerHTML += row;
             });
 
-            section.style.display = 'block';
-            window.scrollTo({ top: section.offsetTop, behavior: 'smooth' });
+            modal.style.display = 'block';
         }
+
+        function closeModal() {
+            document.getElementById('childModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('childModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        fetchMonthlyData();
     </script>
 </body>
 </html>

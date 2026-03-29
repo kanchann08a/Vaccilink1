@@ -1,25 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vaccinator Dashboard - VacciLink</title>
-    <!-- Modern Font -->
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/vaccinator_dashboard.css">
 </head>
+
 <body>
 
-    <!-- LEFT SIDEBAR -->
+    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-logo">
-            <svg viewBox="0 0 24 24" width="28" height="28" stroke="white" stroke-width="2.5" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             <span>VacciLink</span>
         </div>
 
         <div class="vaccinator-profile">
             <div class="profile-img">SY</div>
-            <div class="profile-info">
+            <div>
                 <h4>Seema Yadav</h4>
                 <p>Vaccinator</p>
             </div>
@@ -35,137 +36,286 @@
         </nav>
     </aside>
 
-    <!-- MAIN DASHBOARD CONTENT -->
+    <!-- MAIN -->
     <main class="main-content">
+
         <header class="welcome-header">
             <h1>Welcome, Vaccinator</h1>
             <p>Manage today's vaccination tasks easily</p>
         </header>
 
-        <!-- Search + QR Section -->
-        <div class="action-bar">
+        <!-- SEARCH & FILTERS -->
+        <div class="action-bar" style="flex-direction: column; align-items: flex-start; gap: 15px;">
             <div class="search-box">
-                <svg viewBox="0 0 24 24" width="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" placeholder="Search by Name / ID / Phone">
+                <input type="text" id="searchInput" placeholder="Search by Name / ID / Phone"
+                    oninput="filterChildren()">
             </div>
-            <button class="btn btn-primary">
-                <svg viewBox="0 0 24 24" width="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><rect x="7" y="7" width="3" height="3"></rect><rect x="14" y="7" width="3" height="3"></rect><rect x="7" y="14" width="3" height="3"></rect></svg>
-                Scan QR
-            </button>
+            <div class="filter-tabs" style="display: flex; gap: 10px;">
+                <button class="btn btn-sm btn-secondary active" onclick="filterBy('All')">All</button>
+                <button class="btn btn-sm btn-secondary" onclick="filterBy('Today')">Today</button>
+                <button class="btn btn-sm btn-secondary" onclick="filterBy('Overdue')">Overdue</button>
+                <button class="btn btn-sm btn-secondary" onclick="filterBy('Upcoming')">Upcoming</button>
+                <button class="btn btn-sm btn-secondary" onclick="filterBy('Appointment')">Appointments</button>
+            </div>
         </div>
 
         <div class="dashboard-grid">
-            <!-- Left Side Grid -->
+
+            <!-- LEFT -->
             <div class="grid-left">
-                <!-- Upcoming Vaccination Session Card -->
+
                 <div class="card session-card">
                     <h3>Upcoming Vaccination Session</h3>
-                    <p>Center: Community Health Center, Sector 5</p>
-                    <p>Date: March 18, 2026 | 09:00 AM</p>
-                    <button class="btn btn-secondary" onclick="location.href='start_session.html'" style="padding: 10px 25px;">Start Session</button>
+                    <p>Center: Community Health Center</p>
+                    <p>Date: Today</p>
                 </div>
 
-                <!-- High Priority Children Section -->
                 <div class="card">
                     <div class="section-title">
-                        <h3>High Priority Children</h3>
-                        <a href="#" style="color: var(--primary-green); font-size: 0.85rem; text-decoration: none;">View All</a>
+                        <h3>Today's & Overdue Vaccinations</h3>
                     </div>
-                    <div class="child-card-list">
-                        <!-- Child 1 -->
-                        <div class="child-item">
-                            <div class="child-info">
-                                <h5>Aarav Sharma</h5>
-                                <p>Age: 1.5 Years | ID: #990123</p>
-                            </div>
-                            <span class="status-badge missed">Missed Dose</span>
-                        </div>
-                        <!-- Child 2 -->
-                        <div class="child-item">
-                            <div class="child-info">
-                                <h5>Ishani Gupta</h5>
-                                <p>Age: 6 Months | ID: #990456</p>
-                            </div>
-                            <span class="status-badge overdue">Overdue</span>
-                        </div>
-                        <!-- Child 3 -->
-                        <div class="child-item">
-                            <div class="child-info">
-                                <h5>Vivaan Reddy</h5>
-                                <p>Age: 1 Year | ID: #990789</p>
-                            </div>
-                            <span class="status-badge normal">Normal</span>
-                        </div>
+                    <div id="highPriorityList" class="child-card-list">
+                        <p style="text-align:center;">Loading...</p>
                     </div>
                 </div>
+
+                <div class="card">
+                    <div class="section-title">
+                        <h3>Today's Appointments</h3>
+                        <span class="status-badge" style="background:#e8f5e9; color:#2e7d32;">Today</span>
+                    </div>
+                    <div id="todayAppointmentsList" class="child-card-list">
+                        <p style="text-align:center; color:#888;">No appointments for today</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">
+                        <h3>This Week Appointments</h3>
+                    </div>
+                    <div id="weekAppointmentsList" class="child-card-list">
+                        <p style="text-align:center; color:#888;">No upcoming appointments this week</p>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- Right Side Stats -->
+            <!-- RIGHT -->
             <div class="grid-right">
+
                 <div class="card">
                     <h3>Today's Statistics</h3>
+
                     <div class="stats-container">
                         <div class="stat-box">
                             <span>Total</span>
-                            <h3>45</h3>
+                            <h3 id="statTotal">0</h3>
                         </div>
                         <div class="stat-box">
-                            <span>Done</span>
-                            <h3>28</h3>
+                            <span>Today</span>
+                            <h3 id="statDone">0</h3>
                         </div>
                         <div class="stat-box">
-                            <span>Pend.</span>
-                            <h3>17</h3>
+                            <span>Overdue</span>
+                            <h3 id="statPending">0</h3>
                         </div>
                     </div>
 
-                    <!-- Basic Bar Chart Section -->
-                    <div class="chart-container" id="barChart">
-                        <!-- Bars will be inserted via JS -->
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.75rem; color: var(--text-muted);">
-                        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
-                    </div>
                 </div>
 
-                <div class="card" style="border-left: 4px solid var(--primary-green);">
+                <div class="card">
                     <h4>Defaulter Alert</h4>
-                    <p style="font-size: 0.85rem; margin-top: 5px;">5 children missed their MR-1 doses yesterday in your zone.</p>
-                    <button class="btn-start" style="background: var(--light-green); margin-top: 15px; width: 100%;">Track Defaulters</button>
+                    <p id="defaulterAlert">No defaulters today</p>
                 </div>
+
             </div>
+
         </div>
+
     </main>
 
+    <!-- SCRIPT -->
     <script>
-        /* 
-           Simple Script for Dashboard Interactions
-           Includes a basic manual bar chart implementation
-        */
+        let allData = [];
+        let currentFilter = 'All';
 
-        window.onload = function() {
-            const chartData = [60, 80, 45, 90, 70]; // Dummy percentage heights
-            const chart = document.getElementById('barChart');
-
-            chartData.forEach(height => {
-                const barWrap = document.createElement('div');
-                barWrap.className = 'bar-wrap';
+        async function fetchDashboardData() {
+            try {
+                const res = await fetch("http://localhost:3000/vaccinator/dashboard");
+                if (!res.ok) throw new Error(`API error: ${res.status}`);
                 
-                const bar = document.createElement('div');
-                bar.className = 'bar';
-                bar.style.height = '0%'; // Start at 0 for animation
+                allData = await res.json();
+                console.log("Dashboard Data:", allData);
+                
+                renderDashboard();
+                updateStats(allData);
+            } catch (err) {
+                console.error("Fetch error:", err);
+                document.getElementById("highPriorityList").innerHTML =
+                    `<p style='color:red;text-align:center;'>Failed to load data: ${err.message}</p>`;
+            }
+        }
 
-                barWrap.appendChild(bar);
-                chart.appendChild(barWrap);
+        function renderDashboard() {
+            const list = document.getElementById("highPriorityList");
+            const todayAppList = document.getElementById("todayAppointmentsList");
+            const weekAppList = document.getElementById("weekAppointmentsList");
 
-                // Simple animation delay
-                setTimeout(() => {
-                    bar.style.height = height + '%';
-                }, 100);
+            list.innerHTML = "";
+            todayAppList.innerHTML = "";
+            weekAppList.innerHTML = "";
+
+            const filteredData = allData.filter(item => {
+                if (currentFilter === 'All') return true;
+                if (currentFilter === 'Appointment') return item.type === 'appointment';
+                return item.status === currentFilter;
             });
 
-            console.log("Vaccinator Dashboard Initialized");
-        };
+            // Separate into lists
+            const vaccinations = filteredData.filter(i => i.type === 'vaccination');
+            const todayAppts = filteredData.filter(i => i.type === 'appointment' && i.status === 'Today');
+            const weekAppts = filteredData.filter(i => i.type === 'appointment' && i.status === 'Upcoming');
+
+            if (vaccinations.length === 0) {
+                list.innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>No vaccinations found</p>";
+            } else {
+                vaccinations.forEach(item => list.appendChild(createChildItem(item)));
+            }
+
+            if (todayAppts.length === 0) {
+                todayAppList.innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>No appointments for today</p>";
+            } else {
+                todayAppts.forEach(item => todayAppList.appendChild(createChildItem(item)));
+            }
+
+            if (weekAppts.length === 0) {
+                weekAppList.innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>No upcoming appointments this week</p>";
+            } else {
+                weekAppts.forEach(item => weekAppList.appendChild(createChildItem(item)));
+            }
+        }
+
+        function createChildItem(item) {
+            const div = document.createElement("div");
+            div.className = "child-item";
+            div.style.display = "flex";
+            div.style.flexDirection = "column";
+            div.style.gap = "10px";
+            div.style.padding = "15px";
+            div.style.borderBottom = "1px solid #eee";
+            div.style.cursor = "pointer";
+            
+            div.setAttribute("data-search", `${item.childName} ${item.childID} ${item.parentPhone}`.toLowerCase());
+
+            let color = "blue";
+            if (item.status === "Overdue") color = "#c62828";
+            if (item.status === "Today") color = "#ef6c00";
+            if (item.status === "Upcoming") color = "#283593";
+
+            const badgeStyle = `background:${color}; color:white; padding:4px 10px; border-radius:12px; font-size:0.7rem; font-weight:bold; height:fit-content;`;
+
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;" onclick="location.href='child-profile.html?childId=${item.childID}'">
+                    <div>
+                        <b style="font-size:1rem; color:var(--primary-green);">${item.childName}</b><br>
+                        <span style="font-size:0.85rem; color:#555;">ID: #${item.childID} | ${item.vaccineName} ${item.doseNumber ? '(Dose '+item.doseNumber+')' : ''}</span><br>
+                        <small style="color:#777;">Phone: ${item.parentPhone} ${item.hospital ? '| Facility: ' + item.hospital : ''}</small>
+                    </div>
+                    <span style="${badgeStyle}">${item.status}</span>
+                </div>
+                ${item.type === 'vaccination' ? `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; padding-top:10px; border-top:1px dashed #eee;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:0.85rem; font-weight:500;">Arrived Today:</span>
+                        <div class="toggle-switch" style="display:flex; background:#eee; border-radius:20px; padding:2px;">
+                            <button onclick="event.stopPropagation(); markArrived('${item.childID}', '${item.vaccineName}', '${item.doseNumber}', true)" 
+                                    style="border:none; border-radius:18px; padding:3px 12px; font-size:0.75rem; cursor:pointer; ${item.arrivedToday ? 'background:var(--primary-green); color:white;' : 'background:transparent;'}">YES</button>
+                            <button onclick="event.stopPropagation(); markArrived('${item.childID}', '${item.vaccineName}', '${item.doseNumber}', false)" 
+                                    style="border:none; border-radius:18px; padding:3px 12px; font-size:0.75rem; cursor:pointer; ${!item.arrivedToday ? 'background:#888; color:white;' : 'background:transparent;'}">NO</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); markVaccinated('${item.childID}', '${item.vaccineName}', '${item.doseNumber}')">Mark Vaccinated</button>
+                </div>
+                ` : ''}
+            `;
+            return div;
+        }
+
+        async function markArrived(childID, vaccineName, doseNumber, arrived) {
+            try {
+                const res = await fetch(`http://localhost:3000/vaccination/arrived/${childID}/${vaccineName}/${doseNumber}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ arrived })
+                });
+                if (res.ok) {
+                    // Update local state and re-render
+                    const item = allData.find(i => i.childID === childID && i.vaccineName === vaccineName && i.doseNumber == doseNumber);
+                    if (item) item.arrivedToday = arrived;
+                    renderDashboard();
+                }
+            } catch (err) {
+                console.error("Error marking arrival:", err);
+            }
+        }
+
+        async function markVaccinated(childID, vaccineName, doseNumber) {
+            if (!confirm(`Mark ${vaccineName} as completed for child ID ${childID}?`)) return;
+            try {
+                const res = await fetch(`http://localhost:3000/vaccination/complete/${childID}/${vaccineName}/${doseNumber}`, {
+                    method: 'PUT'
+                });
+                if (res.ok) {
+                    alert("Vaccination record updated successfully!");
+                    fetchDashboardData(); // Refresh all data
+                }
+            } catch (err) {
+                console.error("Error marking completion:", err);
+            }
+        }
+
+        function filterBy(status) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-tabs .btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.innerText === status || (status === 'Appointment' && btn.innerText === 'Appointments')) {
+                    btn.classList.add('active');
+                }
+            });
+            renderDashboard();
+        }
+
+        function filterChildren() {
+            const value = document.getElementById("searchInput").value.toLowerCase();
+            document.querySelectorAll(".child-item").forEach(item => {
+                const text = item.getAttribute("data-search");
+                item.style.display = text.includes(value) ? "flex" : "none";
+            });
+        }
+
+        function updateStats(data) {
+            const vaccs = data.filter(i => i.type === 'vaccination');
+            const total = vaccs.length;
+            const today = vaccs.filter(c => c.status === "Today").length;
+            const overdue = vaccs.filter(c => c.status === "Overdue").length;
+
+            document.getElementById("statTotal").innerText = total;
+            document.getElementById("statDone").innerText = today;
+            document.getElementById("statPending").innerText = overdue;
+
+            const alertBox = document.getElementById("defaulterAlert");
+            if (overdue > 0) {
+                alertBox.innerText = `${overdue} children have overdue vaccinations.`;
+                alertBox.style.color = "#c62828";
+            } else {
+                alertBox.innerText = "No defaulters today";
+                alertBox.style.color = "inherit";
+            }
+        }
+
+        window.onload = fetchDashboardData;
     </script>
+
 </body>
+
 </html>

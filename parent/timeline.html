@@ -367,13 +367,27 @@ fetch("/vaccination/" + data.childID)
             } else if(vaccine.status === "overdue") {
                 statusColor = "#d32f2f";
                 statusText = "Overdue";
+            } else if (vaccine.status === "scheduled") {
+                statusColor = "#f57c00";
+                statusText = "Scheduled";
+            }
+
+            let hospitalText = "";
+            let dateText = "";
+            
+            if (vaccine.status === "scheduled") {
+                hospitalText = vaccine.hospital ? `<p style="font-size:0.85rem;margin-top:5px;color:#555">🏥 ${vaccine.hospital}</p>` : "";
+                dateText = vaccine.scheduledDate ? `<p style="font-size:0.85rem;margin-top:5px;color:#555">📅 Appointment: ${new Date(vaccine.scheduledDate).toDateString()}</p>` : "";
+            } else if (vaccine.status === "completed") {
+                hospitalText = vaccine.hospital ? `<p style="font-size:0.85rem;margin-top:5px;color:#555">🏥 ${vaccine.hospital}</p>` : "";
             }
 
             htmlStr += `
             <div class="event-card" style="border-left: 4px solid ${statusColor}; margin-top: 15px;" data-idx="${idx}">
                 <h4>${vaccine.vaccineName}</h4>
                 <p>Status: <span style="color:${statusColor};font-weight:600;">${statusText}</span></p>
-                ${vaccine.hospital ? `<p style="font-size:0.85rem;margin-top:5px;color:#555">🏥 ${vaccine.hospital}</p>` : ""}
+                ${dateText}
+                ${hospitalText}
             </div>
             `;
         });
