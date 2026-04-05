@@ -50,8 +50,80 @@
         }
 
         .slot-btn.active {
-            background: var(--primary-blue);
-            color: var(--white);
+            background: var(--primary-green);
+            color: white;
+            border-color: var(--primary-green);
+        }
+
+        .appointment-card {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-top: 20px;
+        }
+
+        .center-id {
+            font-size: 12px;
+            color: gray;
+        }
+
+        .status.pending {
+            color: orange;
+            font-weight: bold;
+        }
+
+        .status.completed,
+        .status.accepted {
+            color: var(--primary-green);
+            font-weight: bold;
+        }
+
+        .status.rejected {
+            color: red;
+            font-weight: bold;
+        }
+
+        .history-section {
+            margin-top: 30px;
+        }
+
+        .history-section h3 {
+            margin-bottom: 15px;
+            color: var(--text-dark);
+            font-size: 1.2rem;
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 8px;
+        }
+
+        .no-data {
+            color: #718096;
+            font-style: italic;
+            padding: 10px;
+        }
+
+        .past-box {
+            background: white;
+            padding: 16px;
+            border: 1px solid #edf2f7;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            transition: all 0.3s;
+        }
+
+        .past-box:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            background: #f8fafc;
+        }
+
+        #pastAppointmentsContainer {
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -151,277 +223,293 @@
 
             <button class="btn-primary btn-full" onclick="bookAppointment()">Confirm Booking</button>
         </section>
-    </main>
 
-    <script src="../js/vaccineSchedule.js"></script>
+        <div id="appointmentHistory" class="history-section">
+            <h3>All Appointments</h3>
+            <div id="allAppointments"></div>
 
-    <script>
+            <div class="past-box" onclick="loadPastAppointments()">
+                📂 View All Appointments
+            </div>
+            <div id="pastAppointmentsContainer" style="display:none;"></div>
+        </div>
 
-        const email = localStorage.getItem("parentEmail");
 
-        if (!email) {
-            window.location.href = "login.html";
-        }
 
-        let currentChildID = null;
-        let childDOB = null;
+        <script>
 
-        /* SLOT BUTTON LOGIC */
+            const email = localStorage.getItem("parentEmail");
 
-        const buttons = document.querySelectorAll('.slot-btn');
-        buttons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                buttons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
+            if (!email) {
+                window.location.href = "login.html";
+            }
 
-        /* FETCH PARENT */
+            let currentChildID = null;
+            let childDOB = null;
 
-        fetch("/parent/" + email)
+            /* SLOT BUTTON LOGIC */
 
-            .then(res => res.json())
-
-            .then(parent => {
-
-                if (!parent) {
-                    window.location.href = "login.html";
-                    return;
-                }
-
-                currentChildID = parent.childID;
-                childDOB = parent.childDOB;
-
-                /* Load nearby clinics */
-
-                const parentAddress = `${parent.address}, ${parent.city}`;
-                fetchNearbyClinics(parentAddress);
-
-                /* Fetch vaccination history */
-
-                return fetch("/vaccination/" + parent.childID);
-
-            })
-
-            .then(res => res.json())
-
-            .then(dbVaccines => {
-
-                /* Generate full schedule */
-
-                const schedule =
-                    window.VacciLinkSchedule.generate(childDOB);
-
-                /* Merge schedule + database */
-
-                const merged =
-                    window.VacciLinkSchedule.mergeWithHistory(schedule, dbVaccines);
-
-                /* Vaccine dropdown */
-
-                const select =
-                    document.querySelectorAll("select.form-control")[0];
-
-                select.innerHTML = "";
-
-                /* Only allow overdue + first upcoming */
-
-                let foundUpcoming = false;
-
-                /* Sort by due date */
-
-                merged.sort((a, b) =>
-                    new Date(a.dueDate) - new Date(b.dueDate)
-                );
-
-                merged.forEach(v => {
-
-                    if (v.status === "completed" || v.status === "scheduled") return;
-
-                    if (v.status === "upcoming") {
-
-                        if (foundUpcoming) return;
-
-                        foundUpcoming = true;
-
-                    }
-
-                    const opt = document.createElement("option");
-
-                    opt.value = JSON.stringify({
-
-                        name: v.vaccineName,
-                        dose: v.doseNumber
-
-                    });
-
-                    if (v.status === "overdue") {
-
-                        opt.innerText =
-                            `${v.vaccineName}-${v.doseNumber} (Overdue)`;
-
-                    }
-
-                    else {
-
-                        opt.innerText =
-                            `${v.vaccineName}-${v.doseNumber} (Upcoming)`;
-
-                    }
-
-                    select.appendChild(opt);
-
+            const buttons = document.querySelectorAll('.slot-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    buttons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
                 });
-
-                if (select.children.length === 0) {
-
-                    select.innerHTML =
-                        "<option disabled>All vaccines completed</option>";
-
-                }
-
             });
 
-        /* FETCH NEARBY CLINICS */
+            /* FETCH PARENT */
 
-        async function fetchNearbyClinics(address) {
+            fetch("/parent/" + email)
 
-            const clinicSelect =
-                document.querySelectorAll("select.form-control")[1];
+                .then(res => res.json())
 
-            clinicSelect.innerHTML =
-                "<option disabled selected>Loading nearby clinics...</option>";
+                .then(parent => {
 
-            try {
+                    if (!parent) {
+                        window.location.href = "login.html";
+                        return;
+                    }
 
-                const res =
-                    await fetch(`/nearby-clinics?address=${encodeURIComponent(address)}`);
+                    currentChildID = parent.childID;
+                    childDOB = parent.childDOB;
 
-                const clinics = await res.json();
+                    /* Load nearby clinics */
 
-                if (clinics.length === 0) {
+                    const parentAddress = `${parent.address}, ${parent.city}`;
+                    fetchNearbyClinics(parentAddress);
 
-                    clinicSelect.innerHTML =
-                        "<option disabled>No clinics found nearby</option>";
-
-                    return;
-
-                }
-
-                clinicSelect.innerHTML = "";
-
-                clinics.forEach(clinic => {
-
-                    const opt = document.createElement("option");
-
-                    opt.value = JSON.stringify({
-
-                        name: clinic.name,
-                        address: clinic.address,
-                        distance: clinic.distance
-
-                    });
-
-                    opt.innerText =
-                        `${clinic.name} - ${clinic.distance}`;
-
-                    clinicSelect.appendChild(opt);
-
-                });
-
-            } catch (err) {
-
-                console.error(err);
-
-                clinicSelect.innerHTML =
-                    "<option disabled>Error loading clinics</option>";
-
-            }
-
-        }
-
-        /* BOOK APPOINTMENT */
-
-        async function bookAppointment() {
-
-            const vaccineSelect =
-                document.querySelectorAll("select.form-control")[0];
-
-            if (
-                vaccineSelect.selectedIndex < 0 ||
-                vaccineSelect.children[0].disabled
-            ) {
-
-                return alert("Please select a valid vaccine");
-
-            }
-
-            const vaccineData =
-                JSON.parse(vaccineSelect.value);
-
-            const dateInput =
-                document.querySelector("input[type='date']").value;
-
-            const clinicSelect =
-                document.querySelectorAll("select.form-control")[1];
-
-            let clinicVal;
-
-            try {
-
-                clinicVal = JSON.parse(clinicSelect.value);
-
-            } catch {
-
-                return alert("Please select a clinic");
-
-            }
-
-            if (!dateInput) {
-
-                return alert("Please select appointment date");
-
-            }
-
-            const res = await fetch("/vaccination/add", {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-
-                    childID: currentChildID,
-
-                    vaccineName: vaccineData.name,
-
-                    doseNumber: vaccineData.dose,
-
-                    scheduledDate: dateInput,
-
-                    hospital: clinicVal.name,
-
-                    hospitalAddress: clinicVal.address,
-
-                    distance: clinicVal.distance,
-
-                    status: "scheduled"
+                    /* Fetch vaccination history (backend-merged) */
+                    return fetch("/child/" + parent.childID);
 
                 })
 
-            });
+                .then(res => res.json())
 
-            const data = await res.json();
+                .then(childData => {
+                    const merged = childData.vaccinationHistory || [];
 
-            alert(data.message);
+                    /* Vaccine dropdown */
+                    const select =
+                        document.querySelectorAll("select.form-control")[0];
 
-            window.location.href = "dashboard.html";
+                    select.innerHTML = "";
 
-        }
+                    /* Only allow overdue + first upcoming */
+                    let foundUpcoming = false;
 
-    </script>
+                    /* Sort by due date (v.dueDate is provided by backend) */
+                    merged.sort((a, b) =>
+                        new Date(a.dueDate || a.scheduledDate) - new Date(b.dueDate || b.scheduledDate)
+                    );
+
+                    merged.forEach(v => {
+                        if (v.status === "completed" || v.status === "scheduled") return;
+
+                        if (v.status === "upcoming") {
+                            if (foundUpcoming) return;
+                            foundUpcoming = true;
+                        }
+
+                        const opt = document.createElement("option");
+                        opt.value = JSON.stringify({
+                            name: v.vaccineName,
+                            dose: v.doseNumber
+                        });
+
+                        if (v.status === "overdue") {
+                            opt.innerText = `${v.vaccineName}${v.doseNumber ? ' (Dose ' + v.doseNumber + ')' : ''} (Overdue)`;
+                        } else {
+                            opt.innerText = `${v.vaccineName}${v.doseNumber ? ' (Dose ' + v.doseNumber + ')' : ''} (Upcoming)`;
+                        }
+
+                        select.appendChild(opt);
+                    });
+
+                    if (select.children.length === 0) {
+                        select.innerHTML = "<option disabled>All vaccines completed or scheduled</option>";
+                    }
+
+                    /* Load appointment history */
+                    loadAppointmentHistory(currentChildID);
+
+                });
+
+            /* LOAD PAST APPOINTMENTS */
+            async function loadPastAppointments() {
+                const childID = currentChildID;
+
+                if (!childID) {
+                    console.error("Missing childID. Cannot fetch past appointments.");
+                    alert("Unable to fetch past appointments. Child ID is missing.");
+                    return;
+                }
+
+                console.log("Fetching past appointments for childID:", childID);
+
+                try {
+                    const res = await fetch(`/appointments/past/${childID}`);
+                    if (!res.ok) {
+                        throw new Error(`API returned status ${res.status}`);
+                    }
+                    
+                    const data = await res.json();
+                    console.log("Past appointments received:", data);
+
+                    const container = document.getElementById("pastAppointmentsContainer");
+                    container.style.display = "block";
+                    container.innerHTML = "";
+
+                    if (!data || data.length === 0) {
+                        container.innerHTML = `<p class="no-data">No appointments found</p>`;
+                        return;
+                    }
+
+                    data.forEach(appt => {
+                        const card = document.createElement("div");
+                        card.className = "appointment-card";
+
+                        card.innerHTML = `
+                            <h3>🏥 ${appt.hospital || "Hospital not available"}</h3>
+                            <p>📍 ${appt.hospitalAddress || "Address not available"}</p>
+                            <p>💉 ${appt.vaccineName}</p>
+                            <p>📅 ${new Date(appt.appointmentDate).toDateString()}</p>
+                            <span class="status ${appt.status}">${appt.status.charAt(0).toUpperCase() + appt.status.slice(1)}</span>
+                        `;
+
+                        container.appendChild(card);
+                    });
+
+                    // Scroll to past appointments
+                    container.scrollIntoView({ behavior: "smooth" });
+
+                } catch (err) {
+                    console.error("Error loading past history:", err);
+                    const container = document.getElementById("pastAppointmentsContainer");
+                    if (container) {
+                        container.style.display = "block";
+                        container.innerHTML = `<p class="no-data" style="color:red;">Error loading past appointments</p>`;
+                    }
+                }
+            }
+            /* FETCH NEARBY CLINICS */
+
+            async function fetchNearbyClinics(address) {
+
+                const clinicSelect =
+                    document.querySelectorAll("select.form-control")[1];
+
+                clinicSelect.innerHTML =
+                    "<option disabled selected>Loading nearby clinics...</option>";
+
+                try {
+
+                    const res =
+                        await fetch(`/nearby-clinics?address=${encodeURIComponent(address)}`);
+
+                    const clinics = await res.json();
+
+                    if (clinics.length === 0) {
+
+                        clinicSelect.innerHTML =
+                            "<option disabled>No clinics found nearby</option>";
+
+                        return;
+
+                    }
+
+                    clinicSelect.innerHTML = "";
+
+                    clinics.forEach(clinic => {
+
+                        const opt = document.createElement("option");
+
+                        // Store centerId as value, hospital name & address in data attributes
+                        opt.value = clinic.centerId;
+                        opt.dataset.address = clinic.address || "";
+                        opt.dataset.hospital = clinic.name;
+
+                        opt.innerText = `${clinic.name} - ${clinic.distance}`;
+
+                        clinicSelect.appendChild(opt);
+
+                    });
+
+                } catch (err) {
+
+                    console.error(err);
+
+                    clinicSelect.innerHTML =
+                        "<option disabled>Error loading clinics</option>";
+
+                }
+
+            }
+
+            /* BOOK APPOINTMENT */
+
+            async function bookAppointment() {
+
+                const vaccineSelect =
+                    document.querySelectorAll("select.form-control")[0];
+
+                if (
+                    vaccineSelect.selectedIndex < 0 ||
+                    vaccineSelect.children[0].disabled
+                ) {
+
+                    return alert("Please select a valid vaccine");
+
+                }
+
+                const vaccineData =
+                    JSON.parse(vaccineSelect.value);
+
+                const dateInput =
+                    document.querySelector("input[type='date']").value;
+
+                const clinicSelect = document.querySelectorAll("select.form-control")[1];
+
+                if (clinicSelect.selectedIndex < 0 || clinicSelect.children[0].disabled) {
+                    return alert("Please select a clinic");
+                }
+
+                const selectedOption = clinicSelect.options[clinicSelect.selectedIndex];
+                // option.value = centerId (from /nearby-clinics API)
+                const centerId = selectedOption.value;
+                const hospital = selectedOption.dataset.hospital || selectedOption.text.split(" - ")[0];
+                const hospitalAddress = selectedOption.dataset.address || "";
+
+                if (!dateInput) {
+                    return alert("Please select appointment date");
+                }
+
+                const payload = {
+                    childID: currentChildID,
+                    vaccineName: vaccineData.name,
+                    doseNumber: vaccineData.dose,
+                    scheduledDate: dateInput,
+                    hospital: hospital,
+                    hospitalAddress: hospitalAddress,
+                    centerId: centerId,
+                    status: "scheduled"
+                };
+
+                const res = await fetch("/vaccination/add", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                alert(data.message);
+
+                // Refresh History
+                loadAppointmentHistory(currentChildID);
+
+                // Scroll to the history
+                document.getElementById("appointmentHistory").scrollIntoView({ behavior: "smooth" });
+            }
+        </script>
 </body>
 
 </html>

@@ -55,7 +55,7 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 3000;
             left: 0;
             top: 0;
             width: 100%;
@@ -147,8 +147,8 @@
                 <input type="date" id="newDateInput" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
             </div>
             <div class="modal-footer">
-                <button class="btn btn-sm btn-secondary" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-sm btn-primary" onclick="confirmReschedule()">Save Changes</button>
+                <button type="button" class="btn btn-sm btn-secondary" id="btnRescheduleCancel">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btnRescheduleSave">Save Changes</button>
             </div>
         </div>
     </div>
@@ -160,20 +160,35 @@
         let currentTimelineFilter = 'All';
         let activeVaccine = null;
 
+        const centerIdStore = () => localStorage.getItem("vaccinatorCenterId") || "";
+        const hospitalStore = () => localStorage.getItem("vaccCenterName") || centerIdStore();
+
+        function formatDobSafe(dobStr) {
+            if (!dobStr) return "—";
+            const d = new Date(dobStr);
+            if (!isNaN(d.getTime())) return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const p = String(dobStr).split("-");
+            if (p.length === 3) {
+                const dt = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+                if (!isNaN(dt.getTime())) return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+            return dobStr;
+        }
+
         async function fetchChildData() {
             if (!childId) return;
             try {
-                const res = await fetch(`http://localhost:3000/child/${childId}`);
+                const res = await fetch(`/child/${encodeURIComponent(childId)}`);
                 const data = await res.json();
-                
+
                 document.getElementById('childNameTitle').innerText = data.childName;
                 document.getElementById('childIDBadge').innerText = `ID: #${data.childID}`;
-                document.getElementById('childDOB').innerText = new Date(data.dob).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                document.getElementById('childDOB').innerText = formatDobSafe(data.dob);
                 document.getElementById('parentName').innerText = data.parentName;
                 document.getElementById('parentPhone').innerText = data.parentPhone;
-                document.getElementById('parentAddress').innerText = data.address;
+                document.getElementById('parentAddress').innerText = data.address || "—";
 
-                fullHistory = data.vaccinationHistory;
+                fullHistory = data.vaccinationHistory || [];
                 renderTimeline();
             } catch (err) {
                 console.error("Error fetching child profile:", err);
@@ -198,26 +213,29 @@
             filtered.forEach(v => {
                 const item = document.createElement('div');
                 item.className = 'timeline-item';
-                
-                let statusColor = '#2e7d32'; // Green
-                if (v.status === 'overdue') statusColor = '#c62828'; // Red
-                if (v.status === 'upcoming' || v.status === 'scheduled') statusColor = '#283593'; // Blue
-                
-                const dateText = v.status === 'completed' 
+
+                let statusColor = '#2e7d32';
+                if (v.status === 'overdue') statusColor = '#c62828';
+                if (v.status === 'upcoming' || v.status === 'scheduled') statusColor = '#283593';
+
+                const dateText = v.status === 'completed' && v.dateTaken
                     ? `Taken on: ${new Date(v.dateTaken).toLocaleDateString()}`
                     : `Scheduled: ${new Date(v.scheduledDate || v.dueDate).toLocaleDateString()}`;
 
+                const enc = encodeURIComponent(v.vaccineName);
+                const dose = v.doseNumber != null ? v.doseNumber : 1;
+
                 item.innerHTML = `
                     <div class="vaccine-info">
-                        <h4>${v.vaccineName} <small style="color:#888; font-weight:normal;">(Dose ${v.doseNumber})</small></h4>
-                        <p>${dateText} | <span style="color:${statusColor}; font-weight:600; text-transform:capitalize;">${v.status}</span></p>
+                        <h4>${v.vaccineName} <small style="color:#888; font-weight:normal;">(Dose ${dose})</small></h4>
+                        <p>${dateText} | <span class="timeline-status" style="color:${statusColor}; font-weight:600; text-transform:capitalize;">${v.status}</span></p>
                     </div>
                     <div class="actions">
                         ${v.status === 'completed' ? `
-                            <button class="btn btn-sm btn-secondary" onclick="updateStatus('${v.vaccineName}', ${v.doseNumber}, 'uncomplete')">Undo</button>
+                            <button type="button" class="btn btn-sm btn-secondary mark-uncomplete-btn" data-vaccine="${enc}" data-dose="${dose}">Undo</button>
                         ` : `
-                            <button class="btn btn-sm btn-secondary" onclick="openRescheduleModal('${v.vaccineName}', ${v.doseNumber})">Reschedule</button>
-                            <button class="btn btn-sm btn-primary" onclick="updateStatus('${v.vaccineName}', ${v.doseNumber}, 'complete')">Mark Completed</button>
+                            <button type="button" class="btn btn-sm btn-secondary reschedule-btn" data-vaccine="${enc}" data-dose="${dose}">Reschedule</button>
+                            <button type="button" class="btn btn-sm btn-primary mark-btn" data-vaccine="${enc}" data-dose="${dose}">Mark Completed</button>
                         `}
                     </div>
                 `;
@@ -225,19 +243,56 @@
             });
         }
 
-        async function updateStatus(vaccineName, doseNumber, action) {
-            const endpoint = action === 'complete' ? 'complete' : 'uncomplete';
-            try {
-                const res = await fetch(`http://localhost:3000/vaccination/${endpoint}/${childId}/${vaccineName}/${doseNumber}`, {
-                    method: 'PUT'
-                });
-                if (res.ok) {
-                    fetchChildData();
+        document.getElementById('vaccinationTimeline').addEventListener('click', async (e) => {
+            const markBtn = e.target.closest('.mark-btn');
+            const undoBtn = e.target.closest('.mark-uncomplete-btn');
+            const resBtn = e.target.closest('.reschedule-btn');
+
+            if (markBtn) {
+                const vaccineName = decodeURIComponent(markBtn.dataset.vaccine);
+                const doseNumber = markBtn.dataset.dose;
+                if (!confirm(`Mark ${vaccineName} completed?`)) return;
+                markBtn.disabled = true;
+                try {
+                    const url = `/vaccination/complete/${encodeURIComponent(childId)}/${encodeURIComponent(vaccineName)}/${encodeURIComponent(doseNumber)}`;
+                    const res = await fetch(url, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ centerId: centerIdStore(), hospital: hospitalStore() })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok) {
+                        alert(data.message || "Vaccination updated successfully");
+                        await fetchChildData();
+                    } else {
+                        alert(data.message || "Update failed");
+                        markBtn.disabled = false;
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert("Network error");
+                    markBtn.disabled = false;
                 }
-            } catch (err) {
-                console.error(`Error performing ${action}:`, err);
+                return;
             }
-        }
+
+            if (undoBtn) {
+                const vaccineName = decodeURIComponent(undoBtn.dataset.vaccine);
+                const doseNumber = undoBtn.dataset.dose;
+                try {
+                    const url = `/vaccination/uncomplete/${encodeURIComponent(childId)}/${encodeURIComponent(vaccineName)}/${encodeURIComponent(doseNumber)}`;
+                    const res = await fetch(url, { method: 'PUT' });
+                    if (res.ok) await fetchChildData();
+                } catch (err) { console.error(err); }
+                return;
+            }
+
+            if (resBtn) {
+                const vaccineName = decodeURIComponent(resBtn.dataset.vaccine);
+                const doseNumber = resBtn.dataset.dose;
+                openRescheduleModal(vaccineName, doseNumber);
+            }
+        });
 
         function openRescheduleModal(vaccineName, doseNumber) {
             activeVaccine = { vaccineName, doseNumber };
@@ -249,24 +304,31 @@
             document.getElementById('rescheduleModal').style.display = 'none';
         }
 
-        async function confirmReschedule() {
+        document.getElementById('btnRescheduleCancel').onclick = closeModal;
+        document.getElementById('btnRescheduleSave').onclick = async () => {
             const newDate = document.getElementById('newDateInput').value;
-            if (!newDate) return alert("Please select a date");
-
+            if (!newDate) { alert("Please select a date"); return; }
+            if (!activeVaccine) return;
+            const { vaccineName, doseNumber } = activeVaccine;
             try {
-                const res = await fetch(`http://localhost:3000/vaccination/reschedule/${childId}/${activeVaccine.vaccineName}/${activeVaccine.doseNumber}`, {
+                const url = `/vaccination/reschedule/${encodeURIComponent(childId)}/${encodeURIComponent(vaccineName)}/${encodeURIComponent(doseNumber)}`;
+                const res = await fetch(url, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ newDate })
                 });
+                const data = await res.json().catch(() => ({}));
                 if (res.ok) {
+                    alert(data.message || "Vaccination updated successfully");
                     closeModal();
-                    fetchChildData();
+                    await fetchChildData();
+                } else {
+                    alert(data.message || "Reschedule failed");
                 }
             } catch (err) {
                 console.error("Error rescheduling:", err);
             }
-        }
+        };
 
         function filterTimeline(status) {
             currentTimelineFilter = status;
@@ -277,10 +339,12 @@
             renderTimeline();
         }
 
+        window.addEventListener('click', (event) => {
+            const m = document.getElementById('rescheduleModal');
+            if (event.target === m) closeModal();
+        });
+
         window.onload = fetchChildData;
-        window.onclick = function(event) {
-            if (event.target == document.getElementById('rescheduleModal')) closeModal();
-        }
     </script>
 </body>
 </html>

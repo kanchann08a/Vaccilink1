@@ -6,6 +6,55 @@
     <title>Vaccinator Registration - VacciLink</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .center-filter-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            width: 100%;
+        }
+        .center-filter-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background-color: #f9fafb;
+        }
+        .center-filter-row button {
+            padding: 10px 16px;
+            background: #498661;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .center-filter-row button:hover { background: #3a6d50; }
+        .center-select-styled {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background-color: #f9fafb;
+            margin-top: 8px;
+        }
+        .center-badge {
+            font-size: 0.75rem;
+            color: #498661;
+            font-weight: 600;
+            margin-top: 4px;
+            display: none;
+        }
+        #centerLoadingMsg {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 4px;
+        }
+    </style>
 </head>
 <body class="vacc-split-page">
 
@@ -65,24 +114,24 @@
                         <p>Complete your profile to access the management dashboard.</p>
                     </div>
 
-                    <form action="login.html" class="modern-form">
+                    <form id="signupForm" class="modern-form" onsubmit="handleSignup(event)">
                         
                         <!-- Personal Details -->
                         <h4 class="form-section-title" style="color: #498661;">PERSONAL DETAILS</h4>
                         <div class="form-row two-col">
                             <div class="form-group modern-form-group">
                                 <label>Full Name</label>
-                                <input type="text" required placeholder="Dr. Jane Smith">
+                                <input id="fullName" type="text" required placeholder="Dr. Jane Smith">
                             </div>
                             <div class="form-group modern-form-group">
                                 <label>Date of Birth</label>
-                                <input type="date" required>
+                                <input id="dob" type="date" required>
                             </div>
                         </div>
                         <div class="form-row two-col">
                             <div class="form-group modern-form-group">
                                 <label>Gender</label>
-                                <select required style="width: 100%; padding: 12px 15px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem; background-color: #f9fafb;">
+                                <select id="gender" required style="width: 100%; padding: 12px 15px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem; background-color: #f9fafb;">
                                     <option value="" disabled selected>Select Gender</option>
                                     <option>Male</option>
                                     <option>Female</option>
@@ -91,13 +140,13 @@
                             </div>
                             <div class="form-group modern-form-group">
                                 <label>Mobile Number</label>
-                                <input type="text" required placeholder="+91 (000) 000-0000">
+                                <input id="phone" type="text" required placeholder="+91 (000) 000-0000">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group modern-form-group" style="width: 100%;">
                                 <label>Email Address</label>
-                                <input type="email" required placeholder="jane.smith@healthcare.org">
+                                <input id="email" type="email" required placeholder="jane.smith@healthcare.org">
                             </div>
                         </div>
 
@@ -106,11 +155,11 @@
                         <div class="form-row two-col">
                             <div class="form-group modern-form-group">
                                 <label>Vaccinator ID / License No.</label>
-                                <input type="text" required placeholder="LIC-987234-X">
+                                <input id="vaccinatorID" type="text" required placeholder="LIC-987234-X">
                             </div>
                             <div class="form-group modern-form-group">
                                 <label>Designation</label>
-                                <select required style="width: 100%; padding: 12px 15px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem; background-color: #f9fafb;">
+                                <select id="designation" required style="width: 100%; padding: 12px 15px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem; background-color: #f9fafb;">
                                     <option value="" disabled selected>Select Designation</option>
                                     <option>Doctor</option>
                                     <option>Nurse</option>
@@ -121,7 +170,29 @@
                         <div class="form-row">
                             <div class="form-group modern-form-group" style="width: 100%;">
                                 <label>Years of Experience</label>
-                                <input type="number" required placeholder="5">
+                                <input id="experience" type="number" required placeholder="5">
+                            </div>
+                        </div>
+
+                        <!-- Center Selection -->
+                        <h4 class="form-section-title" style="color: #498661;">VACCINATION CENTER</h4>
+                        <div class="form-row">
+                            <div class="form-group modern-form-group" style="width: 100%;">
+                                <label>Filter by Pincode (optional)</label>
+                                <div class="center-filter-row">
+                                    <input id="pincodeFilter" type="text" placeholder="e.g. 411001">
+                                    <button type="button" onclick="loadCenters()">🔍 Search</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group modern-form-group" style="width: 100%;">
+                                <label>Select Your Center</label>
+                                <span id="centerLoadingMsg">Loading centers…</span>
+                                <select id="centerSelect" class="center-select-styled" required>
+                                    <option value="" disabled selected>Loading centers…</option>
+                                </select>
+                                <div id="centerBadge" class="center-badge">✅ Center ID will be auto-linked</div>
                             </div>
                         </div>
 
@@ -149,13 +220,15 @@
                         <div class="form-row two-col">
                             <div class="form-group modern-form-group">
                                 <label>Create Password</label>
-                                <input type="password" required placeholder="••••••••">
+                                <input id="password" type="password" required placeholder="••••••••">
                             </div>
                             <div class="form-group modern-form-group">
                                 <label>Confirm Password</label>
-                                <input type="password" required placeholder="••••••••">
+                                <input id="confirmPassword" type="password" required placeholder="••••••••">
                             </div>
                         </div>
+
+                        <div id="signupMsg" style="margin-top: 10px; font-size: 0.9rem; color: #498661; font-weight: 600;"></div>
 
                         <button type="submit" class="vacc-submit-btn" style="margin-top: 20px;">Complete Sign Up</button>
                         
@@ -170,5 +243,118 @@
     </div>
     
     <script src="../js/script.js"></script>
+    <script>
+        /* ===== Load Centers from /centers API ===== */
+        async function loadCenters() {
+            const pincode = document.getElementById("pincodeFilter").value.trim();
+            const select = document.getElementById("centerSelect");
+            const msg = document.getElementById("centerLoadingMsg");
+            const badge = document.getElementById("centerBadge");
+
+            select.innerHTML = "<option value='' disabled selected>Loading…</option>";
+            msg.textContent = "Loading centers…";
+            badge.style.display = "none";
+
+            try {
+                const url = pincode
+                    ? `/centers?pincode=${encodeURIComponent(pincode)}`
+                    : `/centers`;
+                const res = await fetch(url);
+                const centers = await res.json();
+
+                msg.textContent = "";
+
+                if (!centers.length) {
+                    select.innerHTML = "<option value='' disabled selected>No centers found" +
+                        (pincode ? ` for pincode ${pincode}` : "") + "</option>";
+                    return;
+                }
+
+                select.innerHTML = "<option value='' disabled selected>— Select your center —</option>";
+                centers.forEach(c => {
+                    const opt = document.createElement("option");
+                    opt.value = c.centerId;
+                    // Display: Hospital Name — Pincode
+                    opt.textContent = `${c.name}${c.pincode ? " — " + c.pincode : ""}`;
+                    select.appendChild(opt);
+                });
+
+                badge.style.display = "block";
+
+            } catch (err) {
+                console.error(err);
+                msg.textContent = "Error loading centers.";
+                select.innerHTML = "<option value='' disabled selected>Error loading centers</option>";
+            }
+        }
+
+        // Show selected centerId hint when user picks
+        document.getElementById("centerSelect").addEventListener("change", function () {
+            const badge = document.getElementById("centerBadge");
+            badge.textContent = `✅ Center ID: ${this.value}`;
+            badge.style.display = "block";
+        });
+
+        /* ===== Handle Signup Form Submit ===== */
+        async function handleSignup(e) {
+            e.preventDefault();
+
+            const password = document.getElementById("password").value;
+            const confirmPwd = document.getElementById("confirmPassword").value;
+            const msgEl = document.getElementById("signupMsg");
+
+            if (password !== confirmPwd) {
+                msgEl.style.color = "red";
+                msgEl.textContent = "❌ Passwords do not match.";
+                return;
+            }
+
+            const centerId = document.getElementById("centerSelect").value;
+            if (!centerId) {
+                msgEl.style.color = "red";
+                msgEl.textContent = "❌ Please select a vaccination center.";
+                return;
+            }
+
+            const payload = {
+                fullName: document.getElementById("fullName").value.trim(),
+                email: document.getElementById("email").value.trim(),
+                phone: document.getElementById("phone").value.trim(),
+                password,
+                vaccinatorID: document.getElementById("vaccinatorID").value.trim(),
+                designation: document.getElementById("designation").value,
+                centerId
+            };
+
+            try {
+                msgEl.style.color = "#498661";
+                msgEl.textContent = "Submitting…";
+
+                const res = await fetch("/vaccinator/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (data.message === "Registered successfully!") {
+                    msgEl.style.color = "#498661";
+                    msgEl.textContent = "✅ Registration successful! Redirecting to login…";
+                    setTimeout(() => location.href = "login.html", 1500);
+                } else {
+                    msgEl.style.color = "red";
+                    msgEl.textContent = "❌ " + data.message;
+                }
+            } catch (err) {
+                console.error(err);
+                msgEl.style.color = "red";
+                msgEl.textContent = "❌ Server error. Please try again.";
+            }
+        }
+
+        // Auto-load centers on page open
+        loadCenters();
+    </script>
 </body>
 </html>

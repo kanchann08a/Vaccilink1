@@ -132,6 +132,12 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="form-row">
+                            <div class="form-group modern-form-group" style="width: 100%;">
+                                <label>Center ID / Assigned Clinic Code</label>
+                                <input type="text" id="centerId" required placeholder="CLINIC-XYZ">
+                            </div>
+                        </div>
 
 
                         <!-- Verification Documents -->
@@ -196,6 +202,12 @@
     </div>
 
     <script>
+        // ── Deployment config ──────────────────────────────────────────────
+        // Replace the placeholder below with your actual Render backend URL
+        // e.g. "https://vaccilink-api.onrender.com"
+        const API_BASE_URL = window.API_BASE_URL || "https://YOUR_RENDER_APP.onrender.com";
+        // ──────────────────────────────────────────────────────────────────
+
         document.getElementById("registerForm").addEventListener("submit", async (e) => {
             e.preventDefault();
 
@@ -213,10 +225,11 @@
                 email: document.getElementById("email").value,
                 vaccinatorID: document.getElementById("vaccinatorID").value,
                 designation: document.getElementById("designation").value,
+                centerId: document.getElementById("centerId").value,
                 password
             };
 
-            const res = await fetch("http://localhost:3000/vaccinator/register", {
+            const res = await fetch(`${API_BASE_URL}/vaccinator/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
@@ -225,6 +238,9 @@
             const result = await res.json();
 
             alert(result.message);
+            if (result.message === "Registered successfully!") {
+                window.location.href = "login.html";
+            }
         });
     </script>
 </body>

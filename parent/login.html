@@ -352,6 +352,7 @@ const data = await res.json();
 if(data.verified){
 
 localStorage.setItem("parentEmail",email);
+if (data.childID) localStorage.setItem("childID", data.childID);
 window.location.href="dashboard.html";
 
 }else{
@@ -375,6 +376,7 @@ const data = await res.json();
 if(data.email){
 
 localStorage.setItem("parentEmail",data.email);
+localStorage.setItem("childID", data.childID);
 window.location.href="dashboard.html";
 
 }else{

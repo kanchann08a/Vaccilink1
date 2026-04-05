@@ -37,11 +37,16 @@
     </aside>
 
     <!-- MAIN -->
-    <main class="main-content">
+    <main class="main-content" id="vaccinatorDashboardRoot">
 
         <header class="welcome-header">
-            <h1>Welcome, Vaccinator</h1>
-            <p>Manage today's vaccination tasks easily</p>
+            <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; width:100%;">
+                <div>
+            <h1 id="welcomeTitle">Welcome, Vaccinator</h1>
+            <p id="welcomeCenter">Manage today's vaccination tasks easily</p>
+                </div>
+                <button type="button" class="btn btn-sm btn-secondary" id="openQrScanBtn">Scan QR</button>
+            </div>
         </header>
 
         <!-- SEARCH & FILTERS -->
@@ -134,19 +139,103 @@
 
     </main>
 
+    <div id="qrAccessModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:2000; align-items:center; justify-content:center; padding:20px;">
+        <div style="background:#fff; max-width:480px; width:100%; border-radius:12px; padding:24px; box-shadow:0 10px 40px rgba(0,0,0,0.2); position:relative;">
+            <button type="button" id="closeQrModal" style="position:absolute; right:16px; top:12px; border:none; background:none; font-size:1.5rem; cursor:pointer; line-height:1;">&times;</button>
+            <h3 style="margin:0 0 12px;">Verify child (QR + OTP)</h3>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:12px;">Paste QR JSON from parent profile, enter your Vaccinator ID, then OTP from parent email.</p>
+            <label style="font-size:0.85rem; font-weight:600;">QR payload</label>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:6px;">
+                <button type="button" class="btn btn-sm btn-secondary" id="qrUploadBtn" style="white-space:nowrap;">Upload QR Image</button>
+                <input type="file" id="qrImageFileInput" accept="image/*" capture="environment" style="display:none;" />
+            </div>
+            <textarea id="qrJsonInput" rows="3" style="width:100%; margin-top:10px; padding:10px; border:1px solid #ddd; border-radius:8px; font-family:monospace; font-size:0.85rem;" placeholder='{"token":"..."} or {"childID":"..."}'></textarea>
+            <label style="font-size:0.85rem; font-weight:600; display:block; margin-top:12px;">Vaccinator ID</label>
+            <input type="text" id="qrVaccinatorIdInput" style="width:100%; margin-top:4px; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="e.g. from your registration">
+            <button type="button" class="btn btn-primary" id="qrSendOtpBtn" style="width:100%; margin-top:12px;">Send OTP to parent</button>
+            <label style="font-size:0.85rem; font-weight:600; display:block; margin-top:12px;">OTP</label>
+            <input type="text" id="qrOtpInput" style="width:100%; margin-top:4px; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="6-digit code">
+            <button type="button" class="btn btn-sm btn-secondary" id="qrVerifyBtn" style="width:100%; margin-top:10px;">Verify &amp; load record</button>
+            <input type="hidden" id="qrResolvedChildId">
+            <div id="qrResultPanel" style="margin-top:16px; max-height:220px; overflow:auto; font-size:0.85rem;"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <!-- SCRIPT -->
     <script>
         let allData = [];
         let currentFilter = 'All';
 
+        const centerId = localStorage.getItem("vaccinatorCenterId");
+        const vaccName = localStorage.getItem("vaccinatorName");
+        const vaccEmail = localStorage.getItem("vaccinatorEmail");
+
+        if (!centerId) {
+            window.location.href = "login.html";
+        }
+
+        function hospitalLabel() {
+            return localStorage.getItem("vaccCenterName") || centerId;
+        }
+
+        function flattenBuckets(buckets) {
+            if (!buckets || typeof buckets !== "object") return [];
+            return [
+                ...(buckets.overdue || []),
+                ...(buckets.today || []),
+                ...(buckets.week || []),
+                ...(buckets.upcoming || [])
+            ];
+        }
+
+        async function hydrateSidebarAndHeader() {
+            try {
+                // Prefer real center name (keep UI same; only replace values)
+                if (vaccEmail) {
+                    const res = await fetch(`/vaccinator/profile/${encodeURIComponent(vaccEmail)}`);
+                    if (res.ok) {
+                        const profile = await res.json();
+                        const displayName = profile.fullName || vaccName || "Vaccinator";
+                        const displayCenter = profile.centerName || profile.centerId || centerId;
+                        if (profile.centerName) localStorage.setItem("vaccCenterName", profile.centerName);
+                        if (profile.vaccinatorID) localStorage.setItem("vaccinatorID", profile.vaccinatorID);
+                        const qIn = document.getElementById("qrVaccinatorIdInput");
+                        if (qIn) qIn.value = localStorage.getItem("vaccinatorID") || "";
+
+                        document.getElementById("welcomeTitle").innerText = `Welcome, ${displayName}`;
+                        document.getElementById("welcomeCenter").innerText = `Center: ${displayCenter}`;
+                        document.querySelector(".vaccinator-profile h4").innerText = displayName;
+                        document.querySelector(".session-card p:nth-child(2)").innerText = `Center: ${displayCenter}`;
+                        return;
+                    }
+                }
+
+                // Fallback to existing localStorage behavior
+                document.getElementById("welcomeTitle").innerText = `Welcome, ${vaccName || "Vaccinator"}`;
+                document.getElementById("welcomeCenter").innerText = `Center ID: ${centerId}`;
+                document.querySelector(".vaccinator-profile h4").innerText = vaccName || "Vaccinator";
+                document.querySelector(".session-card p:nth-child(2)").innerText = `Center: ${centerId}`;
+            } catch (e) {
+                // Keep old content on any failure
+                document.getElementById("welcomeTitle").innerText = `Welcome, ${vaccName || "Vaccinator"}`;
+                document.getElementById("welcomeCenter").innerText = `Center ID: ${centerId}`;
+                document.querySelector(".vaccinator-profile h4").innerText = vaccName || "Vaccinator";
+                document.querySelector(".session-card p:nth-child(2)").innerText = `Center: ${centerId}`;
+            }
+        }
+
         async function fetchDashboardData() {
             try {
-                const res = await fetch("http://localhost:3000/vaccinator/dashboard");
+                await hydrateSidebarAndHeader();
+
+                const res = await fetch(`/vaccinator/dashboard?centerId=${encodeURIComponent(centerId)}`);
                 if (!res.ok) throw new Error(`API error: ${res.status}`);
-                
-                allData = await res.json();
+
+                const buckets = await res.json();
+                allData = flattenBuckets(buckets);
                 console.log("Dashboard Data:", allData);
-                
+
                 renderDashboard();
                 updateStats(allData);
             } catch (err) {
@@ -198,82 +287,321 @@
         function createChildItem(item) {
             const div = document.createElement("div");
             div.className = "child-item";
-            div.style.display = "flex";
-            div.style.flexDirection = "column";
-            div.style.gap = "10px";
-            div.style.padding = "15px";
-            div.style.borderBottom = "1px solid #eee";
-            div.style.cursor = "pointer";
-            
+            div.style.cssText = "flex-direction:column;align-items:stretch;pointer-events:auto;";
+
             div.setAttribute("data-search", `${item.childName} ${item.childID} ${item.parentPhone}`.toLowerCase());
+
+            const dose = item.doseNumber != null ? item.doseNumber : 1;
+            const encVaccine = encodeURIComponent(item.vaccineName || "");
+            const isAppt = item.type === "appointment";
+            const apptSt = item.appointmentStatus || "";
+            const vaccDone = !isAppt && (item.status === "Completed Today" || item.status === "completed");
+            const apptLocked = isAppt && (apptSt === "completed" || apptSt === "rejected");
+            const showActions = (!isAppt && !vaccDone) || (isAppt && !apptLocked);
 
             let color = "blue";
             if (item.status === "Overdue") color = "#c62828";
             if (item.status === "Today") color = "#ef6c00";
-            if (item.status === "Upcoming") color = "#283593";
+            if (item.status === "Upcoming" || item.status === "scheduled") color = "#283593";
+            if (item.status === "completed" || item.status === "Completed Today") color = "#2e7d32";
 
-            const badgeStyle = `background:${color}; color:white; padding:4px 10px; border-radius:12px; font-size:0.7rem; font-weight:bold; height:fit-content;`;
+            const badgeStyle = `background:${color}; color:white; padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:bold; height:fit-content;`;
 
-            div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:flex-start;" onclick="location.href='child-profile.html?childId=${item.childID}'">
-                    <div>
-                        <b style="font-size:1rem; color:var(--primary-green);">${item.childName}</b><br>
-                        <span style="font-size:0.85rem; color:#555;">ID: #${item.childID} | ${item.vaccineName} ${item.doseNumber ? '(Dose '+item.doseNumber+')' : ''}</span><br>
-                        <small style="color:#777;">Phone: ${item.parentPhone} ${item.hospital ? '| Facility: ' + item.hospital : ''}</small>
-                    </div>
-                    <span style="${badgeStyle}">${item.status}</span>
-                </div>
-                ${item.type === 'vaccination' ? `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; padding-top:10px; border-top:1px dashed #eee;">
-                    <div style="display:flex; align-items:center; gap:10px;">
+            let centerText = "";
+            const isCurrentCenter = (item.centerId === centerId);
+
+            if (isCurrentCenter) {
+                centerText = `<span style="color:#2e7d32; font-size:0.85rem;">🏥 Scheduled at: ${item.hospital || "Your Center"}</span><br>`;
+            } else if (item.hospital || item.centerId) {
+                centerText = `<span style="color:#f57c00; font-size:0.85rem;">🏥 Taken at: ${item.hospital || item.centerId} (Other Center)</span><br>`;
+            }
+
+            const isOverdueAndForeign = (item.status === "Overdue" && !isCurrentCenter && !isAppt);
+            const arrived = Boolean(item.arrivedToday);
+            const yesStyle = arrived ? "background:var(--primary-green); color:white;" : "background:transparent;";
+            const noStyle = !arrived ? "background:#888; color:white;" : "background:transparent;";
+            const apptId = item.id ? String(item.id) : "";
+
+            const actionRow = showActions ? `
+                <div class="dash-actions" style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:10px; border-top:1px dashed #eee; position:relative; z-index:2;">
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                         <span style="font-size:0.85rem; font-weight:500;">Arrived Today:</span>
-                        <div class="toggle-switch" style="display:flex; background:#eee; border-radius:20px; padding:2px;">
-                            <button onclick="event.stopPropagation(); markArrived('${item.childID}', '${item.vaccineName}', '${item.doseNumber}', true)" 
-                                    style="border:none; border-radius:18px; padding:3px 12px; font-size:0.75rem; cursor:pointer; ${item.arrivedToday ? 'background:var(--primary-green); color:white;' : 'background:transparent;'}">YES</button>
-                            <button onclick="event.stopPropagation(); markArrived('${item.childID}', '${item.vaccineName}', '${item.doseNumber}', false)" 
-                                    style="border:none; border-radius:18px; padding:3px 12px; font-size:0.75rem; cursor:pointer; ${!item.arrivedToday ? 'background:#888; color:white;' : 'background:transparent;'}">NO</button>
+                        <div style="display:flex; background:#eee; border-radius:20px; padding:2px;">
+                            <button type="button" class="btn-arr-yes" data-child="${item.childID}" data-venc="${encVaccine}" data-dose="${dose}"
+                                style="border:none; border-radius:18px; padding:3px 12px; font-size:0.75rem; cursor:pointer; ${yesStyle}">YES</button>
+                            <button type="button" class="btn-arr-no" data-child="${item.childID}" data-venc="${encVaccine}" data-dose="${dose}"
+                                style="border:none; border-radius:18px; padding:3px 12px; font-size:0.75rem; cursor:pointer; ${noStyle}">NO</button>
                         </div>
                     </div>
-                    <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); markVaccinated('${item.childID}', '${item.vaccineName}', '${item.doseNumber}')">Mark Vaccinated</button>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        ${isOverdueAndForeign ? `<button type="button" class="btn-send-rem btn btn-sm" data-child="${item.childID}" data-venc="${encVaccine}" data-dose="${dose}" data-hospital="${encodeURIComponent(item.hospital || "")}" data-center="${item.centerId || ""}" data-due="${item.scheduledDate ? new Date(item.scheduledDate).toISOString() : ""}" style="background:#fff3e0; color:#ef6c00; border:1px solid #ffcc80;">🔔 Send Reminder</button>` : ""}
+                        <button type="button" class="btn-mark-done btn btn-sm btn-primary" data-child="${item.childID}" data-venc="${encVaccine}" data-dose="${dose}" data-appt="${apptId}">✔ Mark Done</button>
+                    </div>
                 </div>
-                ` : ''}
+            ` : (vaccDone || (isAppt && apptSt === "completed") ? `<p style="font-size:0.85rem;color:#2e7d32;margin-top:8px;">✔ Vaccination marked completed</p>` : "");
+
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                    <div style="flex:1;">
+                        <b class="dash-open-profile" data-child="${item.childID}" style="font-size:1.1rem; color:var(--primary-green); cursor:pointer;">${item.childName}</b><br>
+                        <span style="font-size:0.85rem; color:#555;"> ID: ${item.childID}</span><br>
+                        <div style="margin-top:8px; margin-bottom:8px; padding:8px; background:#f9fafb; border-radius:8px;">
+                            <span style="font-weight:600;">Vaccine:</span> ${item.vaccineName} (Dose ${dose})<br>
+                            <span style="font-weight:600;">Date:</span> ${item.scheduledDate ? new Date(item.scheduledDate).toDateString() : 'N/A'}<br>
+                            ${centerText}
+                            ${isAppt ? `<span style="font-size:0.8rem;">Appointment: ${apptSt || "—"}</span>` : ""}
+                        </div>
+                    </div>
+                    <span style="${badgeStyle}">${String(item.status || "").toUpperCase()}</span>
+                </div>
+                ${actionRow}
             `;
             return div;
         }
 
-        async function markArrived(childID, vaccineName, doseNumber, arrived) {
+        async function sendReminder(childID, extra = {}) {
+            const centerName = typeof extra === "string" ? extra : (extra.centerName || hospitalLabel());
+            const payload = typeof extra === "string"
+                ? { childID, centerName }
+                : {
+                    childID,
+                    centerName,
+                    notifType: extra.notifType,
+                    vaccineName: extra.vaccineName,
+                    doseNumber: extra.doseNumber,
+                    hospitalName: extra.hospitalName,
+                    centerId: extra.centerId,
+                    scheduledDate: extra.scheduledDate,
+                    dueDate: extra.dueDate
+                };
             try {
-                const res = await fetch(`http://localhost:3000/vaccination/arrived/${childID}/${vaccineName}/${doseNumber}`, {
+                const res = await fetch("/vaccinator/send-reminder", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                alert(data.message || "Reminder processed");
+            } catch (err) {
+                console.error("Error sending reminder:", err);
+                alert("Failed to send reminder");
+            }
+        }
+
+        async function markArrived(childID, vaccineEnc, doseNumber, arrived) {
+            const vaccineName = decodeURIComponent(vaccineEnc);
+            try {
+                const url = `/vaccination/arrived/${encodeURIComponent(childID)}/${encodeURIComponent(vaccineName)}/${encodeURIComponent(doseNumber)}`;
+                const res = await fetch(url, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ arrived })
                 });
+                const data = await res.json().catch(() => ({}));
                 if (res.ok) {
-                    // Update local state and re-render
-                    const item = allData.find(i => i.childID === childID && i.vaccineName === vaccineName && i.doseNumber == doseNumber);
-                    if (item) item.arrivedToday = arrived;
+                    allData.forEach(i => {
+                        if (i.childID === childID && i.vaccineName === vaccineName && String(i.doseNumber ?? 1) === String(doseNumber))
+                            i.arrivedToday = arrived;
+                    });
                     renderDashboard();
+                    alert(data.message || "Arrival updated");
+                } else {
+                    alert(data.message || "Could not update arrival");
                 }
             } catch (err) {
                 console.error("Error marking arrival:", err);
+                alert("Failed to update arrival");
             }
         }
 
-        async function markVaccinated(childID, vaccineName, doseNumber) {
+        async function markVaccinated(childID, vaccineEnc, doseNumber, btn) {
+            const vaccineName = decodeURIComponent(vaccineEnc);
             if (!confirm(`Mark ${vaccineName} as completed for child ID ${childID}?`)) return;
+
             try {
-                const res = await fetch(`http://localhost:3000/vaccination/complete/${childID}/${vaccineName}/${doseNumber}`, {
-                    method: 'PUT'
+                if (btn) { btn.disabled = true; btn.innerText = "Saving…"; }
+                const url = `/vaccination/complete/${encodeURIComponent(childID)}/${encodeURIComponent(vaccineName)}/${encodeURIComponent(doseNumber)}`;
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        centerId: localStorage.getItem("vaccinatorCenterId"),
+                        hospital: hospitalLabel()
+                    })
                 });
+                const data = await res.json().catch(() => ({}));
                 if (res.ok) {
-                    alert("Vaccination record updated successfully!");
-                    fetchDashboardData(); // Refresh all data
+                    alert(data.message || "Vaccination marked completed");
+                    await fetchDashboardData();
+                } else {
+                    alert(data.message || "Could not complete vaccination");
+                    if (btn) { btn.disabled = false; btn.innerText = "✔ Mark Done"; }
                 }
             } catch (err) {
                 console.error("Error marking completion:", err);
+                alert("Failed to mark complete");
+                if (btn) { btn.disabled = false; btn.innerText = "✔ Mark Done"; }
             }
         }
 
+        document.getElementById("vaccinatorDashboardRoot").addEventListener("click", (e) => {
+            const prof = e.target.closest(".dash-open-profile");
+            if (prof) {
+                window.location.href = "child-profile.html?childId=" + encodeURIComponent(prof.dataset.child);
+                return;
+            }
+            const rYes = e.target.closest(".btn-arr-yes");
+            if (rYes) {
+                markArrived(rYes.dataset.child, rYes.dataset.venc, rYes.dataset.dose, true);
+                return;
+            }
+            const rNo = e.target.closest(".btn-arr-no");
+            if (rNo) {
+                markArrived(rNo.dataset.child, rNo.dataset.venc, rNo.dataset.dose, false);
+                return;
+            }
+            const rem = e.target.closest(".btn-send-rem");
+            if (rem) {
+                let hosp = "";
+                try { hosp = decodeURIComponent(rem.dataset.hospital || ""); } catch (_) { hosp = rem.dataset.hospital || ""; }
+                sendReminder(rem.dataset.child, {
+                    notifType: "overdue",
+                    vaccineName: decodeURIComponent(rem.dataset.venc || ""),
+                    doseNumber: rem.dataset.dose,
+                    hospitalName: hosp || undefined,
+                    centerId: rem.dataset.center || undefined,
+                    dueDate: rem.dataset.due || undefined
+                });
+                return;
+            }
+            const done = e.target.closest(".btn-mark-done");
+            if (done) {
+                markVaccinated(done.dataset.child, done.dataset.venc, done.dataset.dose, done);
+            }
+        });
+
+        function parseQrPayload(raw) {
+            const text = String(raw || "").trim();
+            if (!text) return {};
+            if (/^https?:\/\//i.test(text) || text.includes("verify-child")) {
+                try {
+                    const u = new URL(text, window.location.origin);
+                    const childID = u.searchParams.get("child_id") || u.searchParams.get("childId") || u.searchParams.get("id");
+                    const token = u.searchParams.get("t") || u.searchParams.get("token");
+                    if (childID || token) return { childID, token, rawText: text };
+                } catch (_) { /* fall through */ }
+            }
+            try {
+                const obj = JSON.parse(text);
+                if (obj && typeof obj === "object") {
+                    const childID = obj.childID || obj.childId || obj.child_id;
+                    const token = obj.token || obj.t;
+                    return { childID, token, rawText: text };
+                }
+            } catch (_) {
+                // Not JSON => treat as plain childID
+            }
+            return { childID: text, token: null, rawText: text };
+        }
+
+        async function decodeQrFromImageFile(file) {
+            if (!file) throw new Error("No image file selected");
+            if (typeof jsQR !== "function") {
+                throw new Error("QR decoder library not loaded");
+            }
+
+            const dataUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+
+            const img = new Image();
+            img.src = dataUrl;
+            await img.decode();
+
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const result = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
+            if (!result || !result.data) throw new Error("Could not decode QR from image");
+            return result.data;
+        }
+
+        (function attachQrUpload() {
+            const uploadBtn = document.getElementById("qrUploadBtn");
+            const fileInput = document.getElementById("qrImageFileInput");
+            if (!uploadBtn || !fileInput) return;
+
+            uploadBtn.addEventListener("click", () => fileInput.click());
+
+            fileInput.addEventListener("change", async () => {
+                try {
+                    const file = fileInput.files && fileInput.files[0];
+                    if (!file) return;
+
+                    const decoded = await decodeQrFromImageFile(file);
+                    document.getElementById("qrJsonInput").value = decoded;
+
+                    const parsed = parseQrPayload(decoded);
+                    if (parsed.childID) {
+                        document.getElementById("qrResolvedChildId").value = parsed.childID;
+                    }
+
+                    alert("QR decoded successfully");
+                } catch (err) {
+                    console.error(err);
+                    alert(err.message || "Failed to decode QR image");
+                } finally {
+                    fileInput.value = "";
+                }
+            });
+        })();
+
+        (function qrModal() {
+            const modal = document.getElementById("qrAccessModal");
+            document.getElementById("openQrScanBtn").onclick = () => { modal.style.display = "flex"; };
+            document.getElementById("closeQrModal").onclick = () => { modal.style.display = "none"; };
+            document.getElementById("qrSendOtpBtn").onclick = async () => {
+                const raw = document.getElementById("qrJsonInput").value.trim();
+                const parsed = parseQrPayload(raw);
+                const vaccinatorID = document.getElementById("qrVaccinatorIdInput").value.trim();
+                if (!vaccinatorID) { alert("Enter Vaccinator ID"); return; }
+                const body = { vaccinatorID };
+                if (parsed.childID) body.childID = parsed.childID;
+                if (parsed.token) body.token = parsed.token;
+                if (!body.childID && !body.token) { alert("QR must include verify URL, token, or child ID"); return; }
+                const res = await fetch("/verify-child-access", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) { alert(data.message || "Failed"); return; }
+                document.getElementById("qrResolvedChildId").value = data.childID || parsed.childID || "";
+                alert(data.message || "OTP sent");
+            };
+            document.getElementById("qrVerifyBtn").onclick = async () => {
+                const childID = document.getElementById("qrResolvedChildId").value.trim();
+                const otp = document.getElementById("qrOtpInput").value.trim();
+                const vaccinatorID = document.getElementById("qrVaccinatorIdInput").value.trim();
+                if (!childID || !otp || !vaccinatorID) { alert("Complete OTP step"); return; }
+                const res = await fetch("/verify-otp-access", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ childID, otp, vaccinatorID })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!data.access) { alert(data.message || "Invalid OTP"); return; }
+                const d = data.childData;
+                const hist = (d.vaccinationHistory || []).map(h =>
+                    `<div style="border-bottom:1px solid #eee;padding:6px 0;"><strong>${h.vaccineName}</strong> Dose ${h.doseNumber} — ${h.status}<br><small>${h.hospital || ""}</small></div>`
+                ).join("");
+                document.getElementById("qrResultPanel").innerHTML = `<p><strong>${d.childName}</strong> (#${d.childID})<br>Parent: ${d.parentName}</p>${hist}<p style="margin-top:8px;"><a href="child-profile.html?childId=${encodeURIComponent(d.childID)}">Open full profile</a></p>`;
+                alert("Access granted");
+            };
+        })();
         function filterBy(status) {
             currentFilter = status;
             document.querySelectorAll('.filter-tabs .btn').forEach(btn => {
@@ -298,10 +626,11 @@
             const total = vaccs.length;
             const today = vaccs.filter(c => c.status === "Today").length;
             const overdue = vaccs.filter(c => c.status === "Overdue").length;
+            const completedToday = vaccs.filter(c => c.status === "Completed Today").length;
 
             document.getElementById("statTotal").innerText = total;
-            document.getElementById("statDone").innerText = today;
-            document.getElementById("statPending").innerText = overdue;
+            document.getElementById("statDone").innerText = completedToday; // "Done" today
+            document.getElementById("statPending").innerText = today; // "Scheduled" today
 
             const alertBox = document.getElementById("defaulterAlert");
             if (overdue > 0) {

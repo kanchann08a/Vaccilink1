@@ -114,9 +114,9 @@ Go to Profile
 
 <div class="qr-section">
 
-<img id="qrCode" class="qr-image">
+<img id="qrCode" class="qr-image" alt="Digital Health ID QR" role="button" tabindex="0">
 
-<p style="font-size:0.75rem;color:var(--text-muted);">Digital Health ID</p>
+<p style="font-size:0.75rem;color:var(--text-muted);">Digital Health ID — tap to open profile</p>
 
 </div>
 
@@ -262,7 +262,7 @@ Go to Profile
 
 
 
-<script src="../js/vaccineSchedule.js"></script>
+
 <script>
 
 const email = localStorage.getItem("parentEmail");
@@ -309,21 +309,34 @@ document.getElementById("childDOB").innerText =
 document.getElementById("childID").innerText =
 "#" + (data.childID || "----");
 
-/* QR Code */
+/* QR Code — stable verify URL per child (server) */
+(function loadDashboardQr() {
+const qrEl = document.getElementById("qrCode");
+function goProfile() { window.location.href = "profile.html"; }
+qrEl.addEventListener("click", goProfile);
+qrEl.addEventListener("keydown", function (e) {
+if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goProfile(); }
+});
+fetch("/parent/qr-verify-url/" + encodeURIComponent(data.childID) + "?origin=" + encodeURIComponent(window.location.origin))
+.then(function (r) { return r.json(); })
+.then(function (q) {
+if (q && q.verify_url) {
+qrEl.src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(q.verify_url);
+qrEl.style.cursor = "pointer";
+} else {
+qrEl.src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent("VacciLink-" + (data.childID || ""));
+}
+})
+.catch(function () {
+qrEl.src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent("VacciLink-" + (data.childID || ""));
+});
+})();
 
-const qr =
-"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=VacciLink-"+
-(data.childID || "vaccilink");
-
-document.getElementById("qrCode").src = qr;
-
-/* Vaccination Logic */
-fetch("/vaccination/" + data.childID)
+// Vaccination Logic
+fetch("/child/" + data.childID)
 .then(res=>res.json())
-.then(dbVaccines=>{
-
-const schedule = window.VacciLinkSchedule.generate(data.childDOB);
-const merged = window.VacciLinkSchedule.mergeWithHistory(schedule, dbVaccines);
+.then(childData=>{
+const merged = childData.vaccinationHistory || [];
 
 let completedCount = 0;
 let upcomingCount = 0;
@@ -335,7 +348,8 @@ if (v.status === "completed") completedCount++;
 else if (v.status === "overdue") overdueCount++;
 else if (v.status === "upcoming" || v.status === "scheduled") {
 if(v.status === "upcoming") upcomingCount++;
-const vDate = new Date(v.scheduledDate);
+// Use dueDate for priority if available, otherwise scheduledDate
+const vDate = new Date(v.scheduledDate || v.dueDate);
 if (!nextVaccine || vDate < nextVaccine.date) {
 nextVaccine = { name: v.vaccineName, date: vDate, status: v.status };
 }
@@ -385,17 +399,20 @@ if(calendarEl) {
             pStatus = "Completed";
         }
 
-        const dateToUse = v.scheduledDate ? new Date(v.scheduledDate) : new Date(v.dueDate);
+        const dateToUse = new Date(v.scheduledDate || v.dueDate);
         const pad = n => String(n).padStart(2, '0');
         const startStr = dateToUse.getFullYear() + '-' + pad(dateToUse.getMonth() + 1) + '-' + pad(dateToUse.getDate());
-        
-        let displayHospital = v.hospital ? v.hospital : "";
         
         return {
             title: evTitle,
             start: startStr,
             color: evColor,
-            extendedProps: { name: v.vaccineName, dose: v.doseNumber, statusStr: pStatus, hospital: displayHospital }
+            extendedProps: { 
+                name: v.vaccineName, 
+                dose: v.doseNumber, 
+                statusStr: pStatus, 
+                hospital: v.hospital || "" 
+            }
         };
     });
 
@@ -412,9 +429,8 @@ if(calendarEl) {
         eventMouseEnter: function(info) {
             let tooltipStr = `<strong style="color:var(--primary-blue); font-size:1rem;">${info.event.extendedProps.name}</strong><br>Status: <strong>${info.event.extendedProps.statusStr}</strong>`;
             
-            if (info.event.extendedProps.statusStr === "Scheduled") {
-                tooltipStr += `<br>Time: 10:30 AM`;
-                if (info.event.extendedProps.hospital) tooltipStr += `<br>Hospital: ${info.event.extendedProps.hospital}`;
+            if (info.event.extendedProps.hospital) {
+                tooltipStr += `<br>Hospital: ${info.event.extendedProps.hospital}`;
             }
 
             let tooltipEl = document.createElement('div');
@@ -438,7 +454,12 @@ if(calendarEl) {
 const tbody = document.querySelector(".table-container tbody");
 if(tbody) {
     let tableHTML = "";
-    merged.slice(0, 5).forEach(v => {
+    // Show top 5 relevant vaccines (completed or overdue first)
+    const sorted = [...merged].sort((a,b) => {
+        const order = { "overdue": 1, "completed": 2, "scheduled": 3, "upcoming": 4 };
+        return (order[a.status] || 99) - (order[b.status] || 99);
+    });
+    sorted.slice(0, 5).forEach(v => {
         let statusHTML = "";
         if(v.status === "completed") statusHTML = `<span class="status-pill pill-completed">Completed</span>`;
         else if(v.status === "overdue") statusHTML = `<span class="status-pill" style="background:#ffebee;color:#d32f2f;">Overdue</span>`;

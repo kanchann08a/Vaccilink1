@@ -10,8 +10,8 @@
     --white: #ffffff;
     --text-dark: #1b5e20;
     --text-muted: #66bb6a;
-    --bg-gray: #f1f8e9;
-    --card-shadow: 0 4px 15px rgba(46, 125, 50, 0.1);
+    --bg-gray: #f8faf9;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     --border-radius: 12px;
     --sidebar-width: 250px;
 }
@@ -99,8 +99,9 @@ body {
 .main-content {
     margin-left: var(--sidebar-width);
     flex: 1;
-    padding: 40px;
-    max-width: 1200px;
+    padding: 32px 40px;
+    max-width: 1600px;
+    width: 100%;
 }
 
 .welcome-header {
@@ -151,8 +152,22 @@ body {
 /* Core Dashboard Grid */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr 350px;
-    gap: 30px;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+}
+
+.grid-left {
+    grid-column: span 8;
+}
+
+.grid-right {
+    grid-column: span 4;
+}
+
+@media (max-width: 1100px) {
+    .grid-left, .grid-right {
+        grid-column: span 12;
+    }
 }
 
 .card {
@@ -192,12 +207,12 @@ body {
 
 /* Child Cards */
 .child-card-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    max-height: 400px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    max-height: 600px;
     overflow-y: auto;
-    padding-right: 5px;
+    padding-right: 8px;
 }
 
 .child-card-list::-webkit-scrollbar {
@@ -205,22 +220,29 @@ body {
 }
 
 .child-card-list::-webkit-scrollbar-track {
-    background: var(--light-green);
-    border-radius: 10px;
+    background: transparent;
 }
 
 .child-card-list::-webkit-scrollbar-thumb {
-    background: var(--text-muted);
+    background: #c5e1a5;
     border-radius: 10px;
 }
 
 .child-item {
-    padding: 15px;
-    border-radius: 10px;
+    background: var(--white);
+    padding: 20px;
+    border-radius: 12px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid #e8f5e9;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.child-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border-color: #c5e1a5;
 }
 
 .child-info h5 { font-size: 0.95rem; }

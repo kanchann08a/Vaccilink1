@@ -152,11 +152,11 @@
         <!-- TOP PROFILE CARD -->
         <div class="profile-header-card">
             <div class="header-profile-info">
-                <div class="header-img-circle">SY</div>
+                <div class="header-img-circle" id="headerInitials">SY</div>
                 <div class="header-details">
-                    <h2>Seema Yadav</h2>
-                    <p>Phone: +91 98765 43210</p>
-                    <p>Aadhaar ID: XXXX XXXX 4521</p>
+                    <h2 id="headerName">Seema Yadav</h2>
+                    <p id="headerPhone">Phone: +91 98765 43210</p>
+                    <p id="headerAadhaar">Aadhaar ID: XXXX XXXX 4521</p>
                 </div>
             </div>
             <div class="header-actions">
@@ -175,11 +175,11 @@
                         <span class="verified-badge">Verified Vaccinator</span>
                     </div>
                     <div class="info-list">
-                        <div class="info-item"><label>Name</label><span>Seema Yadav</span></div>
-                        <div class="info-item"><label>Role</label><span>Vaccinator</span></div>
-                        <div class="info-item"><label>Center Name</label><span>PHC Mumbai, Zone 4</span></div>
-                        <div class="info-item"><label>Total Sessions Conducted</label><span>48</span></div>
-                        <div class="info-item"><label>Total Children Vaccinated</label><span>1,420</span></div>
+                        <div class="info-item"><label>Name</label><span id="detailName">Seema Yadav</span></div>
+                        <div class="info-item"><label>Role</label><span id="detailRole">Vaccinator</span></div>
+                        <div class="info-item"><label>Center Name</label><span id="detailCenter">PHC Mumbai, Zone 4</span></div>
+                        <div class="info-item"><label>Total Sessions Conducted</label><span id="detailSessions">48</span></div>
+                        <div class="info-item"><label>Total Children Vaccinated</label><span id="detailChildren">1,420</span></div>
                     </div>
                 </div>
 
@@ -187,18 +187,15 @@
                 <div class="card" style="display: flex; flex-direction: column;">
                     <h3>Last Vaccination Session</h3>
                     <div style="margin: 15px 0; padding: 15px; background: #f9fdf9; border: 1px solid #e8f5e9; border-radius: 12px;">
-                        <p style="font-size: 0.9rem; margin-bottom: 5px;"><strong>Date:</strong> March 20, 2026</p>
-                        <p style="font-size: 0.9rem; margin-bottom: 5px;"><strong>Location:</strong> Community Center A</p>
-                        <p style="font-size: 0.9rem;"><strong>Children Vaccinated:</strong> 24</p>
+                        <p style="font-size: 0.9rem; margin-bottom: 5px;"><strong>Date:</strong> <span id="lastSessionDate">March 20, 2026</span></p>
+                        <p style="font-size: 0.9rem; margin-bottom: 5px;"><strong>Location:</strong> <span id="lastSessionLocation">Community Center A</span></p>
+                        <p style="font-size: 0.9rem;"><strong>Children Vaccinated:</strong> <span id="lastSessionChildren">24</span></p>
                     </div>
                     
                     <div class="recent-activity-list" style="margin-top: 10px; border-top: 1px solid #eee;">
-                        <div class="activity-item" style="padding: 12px 5px; border-bottom: 1px solid #f9f9f9;"><div class="activity-bullet"></div> Arya Yadav</div>
-                        <div class="activity-item" style="padding: 12px 5px; border-bottom: 1px solid #f9f9f9;"><div class="activity-bullet"></div> Rohan Sharma</div>
-                        <div class="activity-item" style="padding: 12px 5px; border-bottom: 1px solid #f9f9f9;"><div class="activity-bullet"></div> Meera Singh</div>
-                        <div class="activity-item" style="padding: 12px 5px; border-bottom: 1px solid #f9f9f9;"><div class="activity-bullet"></div> Rahul Verma</div>
-                        <div class="activity-item" style="padding: 12px 5px; border-bottom: 1px solid #f9f9f9;"><div class="activity-bullet"></div> Ishani Gupta</div>
-                        <div class="activity-item" style="padding: 12px 5px; border-bottom: 1px solid #f9f9f9;"><div class="activity-bullet"></div> Vivaan Reddy</div>
+                        <div id="recentSessionsList">
+                            <div class="activity-item" style="padding: 12px 5px; border-bottom: 1px solid #f9f9f9;"><div class="activity-bullet"></div> Loading...</div>
+                        </div>
                     </div>
 
                     <div style="text-align: center; margin-top: 25px; padding-bottom: 10px;">
@@ -260,5 +257,123 @@
         </div>
     </main>
 
+    <script>
+        // ── Deployment config ──────────────────────────────────────────────
+        // Replace the placeholder below with your actual Render backend URL
+        // e.g. "https://vaccilink-api.onrender.com"
+        const API_BASE_URL = window.API_BASE_URL || "https://YOUR_RENDER_APP.onrender.com";
+        // ──────────────────────────────────────────────────────────────────
+
+        const vaccEmail = localStorage.getItem("vaccinatorEmail");
+        const centerId = localStorage.getItem("vaccinatorCenterId");
+        const vaccName = localStorage.getItem("vaccinatorName");
+
+        if (!vaccEmail || !centerId) {
+            window.location.href = "login.html";
+        }
+
+        function maskAadhaar(id) {
+            const s = String(id || "").replace(/\s+/g, "");
+            if (!s) return "XXXX XXXX XXXX";
+            const last4 = s.slice(-4);
+            return `XXXX XXXX ${last4}`;
+        }
+
+        function initialsFromName(name) {
+            const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+            const first = parts[0]?.[0] || "V";
+            const second = parts.length > 1 ? parts[1][0] : (parts[0]?.[1] || "");
+            return (first + second).toUpperCase();
+        }
+
+        function formatDate(d) {
+            if (!d) return "-";
+            const dt = new Date(d);
+            if (isNaN(dt.getTime())) return "-";
+            return dt.toDateString();
+        }
+
+        async function loadVaccinatorProfile() {
+            const res = await fetch(`${API_BASE_URL}/vaccinator/profile/${encodeURIComponent(vaccEmail)}`);
+            if (!res.ok) throw new Error("Failed to load profile");
+            return await res.json();
+        }
+
+        async function loadSummary() {
+            const res = await fetch(`${API_BASE_URL}/vaccinator/summary/${encodeURIComponent(centerId)}`);
+            if (!res.ok) throw new Error("Failed to load summary");
+            return await res.json();
+        }
+
+        async function loadRecentSessions() {
+            const res = await fetch(`${API_BASE_URL}/vaccinator/recent-sessions/${encodeURIComponent(centerId)}`);
+            if (!res.ok) throw new Error("Failed to load recent sessions");
+            return await res.json();
+        }
+
+        async function init() {
+            try {
+                const [profile, summary, recent] = await Promise.all([
+                    loadVaccinatorProfile(),
+                    loadSummary(),
+                    loadRecentSessions()
+                ]);
+
+                const displayName = profile.fullName || vaccName || "Vaccinator";
+                const displayRole = profile.designation || "Vaccinator";
+                const displayCenter = profile.centerName || profile.centerId || centerId;
+
+                // Sidebar
+                document.querySelector(".vaccinator-profile .profile-info h4").innerText = displayName;
+                document.querySelector(".vaccinator-profile .profile-img").innerText = initialsFromName(displayName);
+
+                // Header card
+                document.getElementById("headerInitials").innerText = initialsFromName(displayName);
+                document.getElementById("headerName").innerText = displayName;
+                document.getElementById("headerPhone").innerText = `Phone: ${profile.phone || "-"}`;
+                document.getElementById("headerAadhaar").innerText = `Aadhaar ID: ${maskAadhaar(profile.vaccinatorID)}`;
+
+                // Details card
+                document.getElementById("detailName").innerText = displayName;
+                document.getElementById("detailRole").innerText = displayRole;
+                document.getElementById("detailCenter").innerText = displayCenter;
+                document.getElementById("detailSessions").innerText = String(summary.totalSessionsConducted ?? 0);
+                document.getElementById("detailChildren").innerText = String(summary.totalChildrenVaccinated ?? 0);
+
+                // Last session card
+                document.getElementById("lastSessionDate").innerText = formatDate(summary.lastSessionDate);
+                document.getElementById("lastSessionLocation").innerText = displayCenter;
+                document.getElementById("lastSessionChildren").innerText = String(summary.totalChildrenVaccinated ?? 0);
+
+                const list = document.getElementById("recentSessionsList");
+                list.innerHTML = "";
+                if (!recent || recent.length === 0) {
+                    list.innerHTML = `<div class="activity-item" style="padding: 12px 5px; border-bottom: 1px solid #f9f9f9;"><div class="activity-bullet"></div> No recent sessions</div>`;
+                } else {
+                    recent.forEach(item => {
+                        const row = document.createElement("div");
+                        row.className = "activity-item";
+                        row.style.cssText = "padding: 12px 5px; border-bottom: 1px solid #f9f9f9;";
+                        row.innerHTML = `<div class="activity-bullet"></div> ${item.childName || "Child"} — ${item.vaccineName || "Vaccine"} (${formatDate(item.date)})`;
+                        list.appendChild(row);
+                    });
+                }
+
+                // Summary card (right) — keep layout same; update the 4 values in-place
+                const summarySpans = document.querySelectorAll(".grid-right .card .info-list .info-item span");
+                // Order in markup: sessions, children, last session, assigned center
+                if (summarySpans[0]) summarySpans[0].innerText = String(summary.totalSessionsConducted ?? 0);
+                if (summarySpans[1]) summarySpans[1].innerText = String(summary.totalChildrenVaccinated ?? 0);
+                if (summarySpans[2]) summarySpans[2].innerText = formatDate(summary.lastSessionDate);
+                if (summarySpans[3]) summarySpans[3].innerText = displayCenter;
+
+            } catch (err) {
+                console.error(err);
+                alert("Failed to load vaccinator profile data.");
+            }
+        }
+
+        init();
+    </script>
 </body>
 </html>

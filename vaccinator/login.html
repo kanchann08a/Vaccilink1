@@ -31,13 +31,9 @@
                     ease. Your expertise, our platform.</p>
 
                 <div class="brand-illustration" style="margin-top: 30px;">
-    <img 
-        src="../images/hero_indian_vaccination.jpg"
-        alt="Healthcare professionals team"
-        class="illustration-img"
-        style="width: 100%; border-radius: 12px; object-fit: cover;"
-    >
-</div>
+                    <img src="../images/hero_indian_vaccination.jpg" alt="Healthcare professionals team"
+                        class="illustration-img" style="width: 100%; border-radius: 12px; object-fit: cover;">
+                </div>
 
                 <div class="brand-badge"
                     style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); margin-top: 30px;">
@@ -83,7 +79,7 @@
                         <p>Enter your professional credentials to continue.</p>
                     </div>
 
-                    <form action="dashboard.html" class="vacc-modern-form">
+                    <form class="vacc-modern-form">
 
                         <div class="vacc-form-group">
                             <label>Vaccinator ID / Employee ID</label>
@@ -130,6 +126,37 @@
     </div>
 
     <script src="../js/script.js"></script>
+    <script>
+        document.querySelector(".vacc-modern-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const email = document.querySelector("input[type='email']").value;
+            const password = document.getElementById("vaccPassword").value;
+
+            try {
+                const res = await fetch("/vaccinator/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await res.json();
+
+                if (result.message === "Login successful") {
+                    localStorage.setItem("vaccinatorCenterId", result.vaccinator.centerId);
+                    localStorage.setItem("vaccinatorName", result.vaccinator.fullName);
+                    localStorage.setItem("vaccinatorEmail", result.vaccinator.email);
+                    localStorage.setItem("vaccinatorID", result.vaccinator.vaccinatorID || "");
+                    window.location.href = "dashboard.html";
+                } else {
+                    alert(result.message || "Login failed");
+                }
+            } catch (err) {
+                console.error("Login error:", err);
+                alert("An error occurred during login.");
+            }
+        });
+    </script>
 </body>
 
 </html>

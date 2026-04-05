@@ -55,49 +55,77 @@
         </section>
     </main>
 
-    <script src="../js/vaccineSchedule.js"></script>
     <script>
         const email = localStorage.getItem("parentEmail");
-        if(!email) window.location.href="login.html";
-        
+        if (!email) window.location.href = "login.html";
+
+        function formatDate(d) {
+            if (!d) return "-";
+            const date = new Date(d);
+            const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            return date.getDate().toString().padStart(2,"0") + " " + months[date.getMonth()] + " " + date.getFullYear();
+        }
+
         fetch("/parent/" + email)
         .then(res => res.json())
         .then(parent => {
-            if(!parent) return;
-            fetch("/vaccination/" + parent.childID)
+            if (!parent || !parent.childID) return;
+
+            document.querySelector(".card p.text-muted").innerText =
+                "A comprehensive table of all vaccines taken by " + (parent.childName || "child") + ".";
+
+            // ✅ Use backend-merged data from /child/:childID
+            fetch("/child/" + parent.childID)
             .then(res => res.json())
-            .then(dbVaccines => {
+            .then(childData => {
+                const vaccines = (childData && childData.vaccinationHistory) ? childData.vaccinationHistory : [];
                 const tbody = document.querySelector(".table-container tbody");
                 tbody.innerHTML = "";
-                
-                function formatDate(d) {
-                    if(!d) return "-";
-                    const date = new Date(d);
-                    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-                    return date.getDate().toString().padStart(2,"0") + " " + months[date.getMonth()] + " " + date.getFullYear();
+
+                if (vaccines.length === 0) {
+                    tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;color:#888;'>No records found.</td></tr>";
+                    return;
                 }
-                
-                const schedule = window.VacciLinkSchedule.generate(parent.childDOB);
-                const merged = window.VacciLinkSchedule.mergeWithHistory(schedule, dbVaccines);
-                
-                merged.forEach(v => {
+
+                vaccines.forEach(v => {
                     const tr = document.createElement("tr");
                     let pillClass = "pill-upcoming";
                     let displayStatus = "Upcoming";
-                    if(v.status === "completed") { pillClass = "pill-completed"; displayStatus = "Completed"; }
-                    else if(v.status === "overdue") { pillClass = "pill-upcoming"; displayStatus = "Overdue"; }
-                    
-                    let extraHTML = "";
-                    if(v.status === "overdue") {
-                        extraHTML = `<br><button class="btn-primary" style="margin-top:8px;padding:4px 8px;font-size:0.75rem;" onclick="window.location.href='appointment.html?vaccineName=${encodeURIComponent(v.vaccineName)}'">Reschedule Appointment</button>`;
+                    let pillStyle = "";
+
+                    if (v.status === "completed") {
+                        pillClass = "pill-completed";
+                        displayStatus = "Completed";
+                    } else if (v.status === "overdue") {
+                        pillStyle = 'style="background:#ffebee;color:#d32f2f;"';
+                        displayStatus = "Overdue";
+                    } else if (v.status === "scheduled") {
+                        pillStyle = 'style="background:#fff3e0;color:#f57c00;"';
+                        displayStatus = "Scheduled";
                     }
-                    
-                    tr.innerHTML = `
-                        <td>${v.vaccineName} <br><span style="font-size:0.8rem;color:var(--text-muted);">${v.purpose}</span></td>
-                        <td>${v.dateTaken ? formatDate(v.dateTaken) : formatDate(v.scheduledDate) + " (Sched)"}</td>
-                        <td>${v.hospital || "-"}</td>
-                        <td><span class="status-pill ${pillClass}" ${v.status==="overdue" ? 'style="background:#ffebee;color:#d32f2f;"' : ''}>${displayStatus}</span>${extraHTML}</td>
-                    `;
+
+                    // ✅ Date: show dateTaken for completed, scheduledDate for scheduled, dueDate otherwise
+                    let dateDisplay = "-";
+                    if (v.status === "completed" && v.dateTaken) {
+                        dateDisplay = formatDate(v.dateTaken);
+                    } else if (v.status === "scheduled" && v.scheduledDate) {
+                        dateDisplay = formatDate(v.scheduledDate) + " (Appt)";
+                    } else if (v.dueDate) {
+                        dateDisplay = formatDate(v.dueDate);
+                    }
+
+                    let extraHTML = "";
+                    if (v.status === "overdue") {
+                        extraHTML = '<br><button class="btn-primary" style="margin-top:8px;padding:4px 8px;font-size:0.75rem;" onclick="window.location.href=\'appointment.html?vaccineName=' + encodeURIComponent(v.vaccineName) + '\'">Reschedule</button>';
+                    }
+
+                    // ✅ Render v.hospital from backend-merged data
+                    tr.innerHTML =
+                        "<td>" + v.vaccineName + (v.doseNumber ? " (Dose " + v.doseNumber + ")" : "") + "</td>" +
+                        "<td>" + dateDisplay + "</td>" +
+                        "<td>" + (v.hospital || "-") + "</td>" +
+                        "<td><span class=\"status-pill " + pillClass + "\" " + pillStyle + ">" + displayStatus + "</span>" + extraHTML + "</td>";
+
                     tbody.appendChild(tr);
                 });
             });

@@ -138,11 +138,14 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        childID: child.childID,
                         childName: child.childName,
                         parentEmail: child.parentEmail,
                         vaccineName: child.vaccineName,
                         doseNumber: child.doseNumber,
-                        dueDate: child.dueDate
+                        dueDate: child.dueDate,
+                        hospitalName: child.hospitalName,
+                        centerId: child.centerId
                     })
                 });
                 const result = await res.json();
