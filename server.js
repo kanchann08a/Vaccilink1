@@ -1,17 +1,29 @@
-require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
 const cors = require("cors");
 const crypto = require("crypto");
+const path = require("path");
+const QRCode = require("qrcode");
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
+app.get("/verify-child.html", (req, res) => {
+  let query = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
+  query = query.replace("childId=", "id=");
+  res.redirect(`/verify.html${query}`);
+});
+app.get("/vaccinator/verify-child.html", (req, res) => {
+  let query = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
+  query = query.replace("childId=", "id=");
+  res.redirect(`/verify.html${query}`);
+});
 
-// Allow requests from the deployed Netlify frontend and local development
+const GOOGLE_MAPS_API_KEY = "your_google_maps_key";
+
+// Allow all origins for local setup
 const allowedOrigins = [
   process.env.FRONTEND_URL,          // e.g. https://vaccilink.netlify.app
   "http://localhost:3000",
@@ -20,24 +32,22 @@ const allowedOrigins = [
   "http://127.0.0.1:5500"
 ].filter(Boolean);
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (curl, Postman, same-origin)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS: " + origin));
-    }
-  },
-  credentials: true
-}));
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(__dirname));
+
+// Serve static files from both root and /frontend
+app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, "frontend")));
+
+// Root route — opens the landing page
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "index.html"));
+});
 
 /* MongoDB */
 
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect("mongodb+srv://vaccilink1:vaccilink1@cluster0.97l8vhp.mongodb.net/?retryWrites=true&w=majority")
   .then(() => console.log("MongoDB Connected"))
   .catch(err => console.log(err));
 
@@ -46,8 +56,8 @@ mongoose.connect(process.env.MONGODB_URI)
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    user: "hospitrack58@gmail.com",
+    pass: "qmtf lmzl kuvs purw"
   }
 });
 
@@ -264,7 +274,11 @@ const parentSchema = new mongoose.Schema({
     visitDate: Date,
     updatedByVaccinator: { type: Boolean, default: false },
     vaccinatorID: String,
-    updatedAt: Date
+    updatedAt: Date,
+    certificateId: String,
+    issuedAt: Date,
+    qrCode: String,
+    vaccinatorName: String
   }]
 
 });
@@ -331,11 +345,10 @@ function formatNotifDateShort(d) {
   return `${String(dt.getDate()).padStart(2, "0")} ${months[dt.getMonth()]} ${dt.getFullYear()}`;
 }
 
-function buildVerifyQrUrl(base, childID, secret) {
+function buildVerifyQrUrl(base, certificateId) {
   const b = String(base || "").replace(/\/$/, "");
-  return `${b}/verify-child.html?child_id=${encodeURIComponent(childID)}&t=${encodeURIComponent(secret)}`;
+  return `${b}/verify.html?id=${encodeURIComponent(certificateId)}`;
 }
-
 function notifDedupeKey(item) {
   const d = item.date || item.created_at;
   const day = d ? String(d).slice(0, 10) : "";
@@ -568,10 +581,7 @@ app.get("/parent/qr-verify-url/:childID", async (req, res) => {
     const parent = await Parent.findOne({ childID });
     if (!parent) return res.status(404).json({ message: "Child not found" });
     const secret = await ensureQrSecret(parent);
-    const base =
-      origin ||
-      process.env.PUBLIC_BASE_URL ||
-      `${req.protocol}://${req.get("host") || "localhost:3000"}`;
+    const base = "http://localhost:3000";
     res.json({
       verify_url: buildVerifyQrUrl(base, childID, secret),
       child_id: childID
@@ -1351,7 +1361,7 @@ app.put("/vaccination/arrived/:childID/:vaccineName/:doseNumber", async (req, re
 app.put("/vaccination/complete/:childID/:vaccineName/:doseNumber", async (req, res) => {
   try {
     const { childID, vaccineName, doseNumber } = req.params;
-    const { centerId, hospital } = req.body || {};
+    const { centerId, hospital, vaccinatorName } = req.body || {};
     const decodedName = decodeURIComponent(vaccineName);
 
     const parent = await Parent.findOne({ childID });
@@ -1366,9 +1376,24 @@ app.put("/vaccination/complete/:childID/:vaccineName/:doseNumber", async (req, r
     );
 
     const taken = new Date();
+
+    const certId = `VACC-2026-${Math.floor(1000 + Math.random() * 9000)}-${Date.now().toString().slice(-4)}`;
+    const verifyBase = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host") || "localhost:3000"}`;
+    const verifyUrl = `${verifyBase}/verify.html?id=${certId}`;
+    let qrCodeBase64 = "";
+    try {
+      qrCodeBase64 = await QRCode.toDataURL(verifyUrl);
+    } catch (e) {
+      console.error("QR Code Error:", e);
+    }
+
     const record = upsertVaccinationRecord(parent, decodedName, doseNumber, {
       status: "completed",
-      dateTaken: taken
+      dateTaken: taken,
+      certificateId: certId,
+      issuedAt: taken,
+      qrCode: qrCodeBase64,
+      vaccinatorName: vaccinatorName || ""
     });
     if (centerId) record.centerId = centerId;
     if (hospital) record.hospital = hospital;
@@ -1389,6 +1414,34 @@ app.put("/vaccination/complete/:childID/:vaccineName/:doseNumber", async (req, r
     res.status(500).json({ message: "Error marking vaccination complete" });
   }
 });
+/* GET VERIFY DIGITAL CERTIFICATE */
+app.get("/api/verify/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const parent = await Parent.findOne({ "vaccinationHistory.certificateId": id });
+    if (!parent) return res.status(404).json({ message: "Invalid Certificate" });
+
+    const vaccineRecord = parent.vaccinationHistory.find(v => v.certificateId === id);
+    if (!vaccineRecord) return res.status(404).json({ message: "Invalid Certificate" });
+
+    res.json({
+      verified: true,
+      childName: parent.childName,
+      parentName: parent.parentName,
+      vaccineName: vaccineRecord.vaccineName,
+      date: vaccineRecord.dateTaken,
+      hospital: vaccineRecord.hospital,
+      vaccinator: vaccineRecord.vaccinatorName || "Authorized Vaccinator",
+      certificateId: vaccineRecord.certificateId,
+      issuedAt: vaccineRecord.issuedAt,
+      qrCode: vaccineRecord.qrCode
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error verifying certificate" });
+  }
+});
+
 /* UNMARK COMPLETED */
 app.put("/vaccination/uncomplete/:childID/:vaccineName/:doseNumber", async (req, res) => {
   try {

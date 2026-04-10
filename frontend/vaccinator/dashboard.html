@@ -32,6 +32,7 @@
             <a href="schedule.html" class="nav-link">Vaccination Schedule</a>
             <a href="fup.html" class="nav-link">Lost to Follow-Up</a>
             <a href="appointment.html" class="nav-link">Appointment</a>
+            <a href="scanner.html" class="nav-link">Digital Scanner</a>
             <a href="profile.html" class="nav-link">Profile</a>
         </nav>
     </aside>
@@ -338,7 +339,7 @@
                         <button type="button" class="btn-mark-done btn btn-sm btn-primary" data-child="${item.childID}" data-venc="${encVaccine}" data-dose="${dose}" data-appt="${apptId}">✔ Mark Done</button>
                     </div>
                 </div>
-            ` : (vaccDone || (isAppt && apptSt === "completed") ? `<p style="font-size:0.85rem;color:#2e7d32;margin-top:8px;">✔ Vaccination marked completed</p>` : "");
+            ` : (vaccDone || (isAppt && apptSt === "completed") ? `<div style="display:flex; justify-content:space-between; align-items:center; width:100%;"><p style="font-size:0.85rem;color:#2e7d32;margin-top:8px;">✔ Vaccination marked completed</p>\${item.certificateId ? \`<button type="button" class="btn btn-sm btn-outline" style="margin-top:8px;border:1px solid #2e7d32;color:#2e7d32;background:transparent;border-radius:4px;padding:4px 8px;cursor:pointer;" onclick="window.open('/frontend/verify.html?id=\${item.certificateId}', '_blank')">View Certificate</button>\` : ""}</div>` : "");
 
             div.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">

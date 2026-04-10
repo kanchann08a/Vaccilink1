@@ -461,7 +461,12 @@ if(tbody) {
     });
     sorted.slice(0, 5).forEach(v => {
         let statusHTML = "";
-        if(v.status === "completed") statusHTML = `<span class="status-pill pill-completed">Completed</span>`;
+        if(v.status === "completed") {
+            statusHTML = `<span class="status-pill pill-completed">Completed</span>`;
+            if (v.certificateId) {
+                statusHTML += `<br><a href="../verify.html?id=${v.certificateId}" target="_blank" style="font-size:0.75rem;color:#2e7d32;text-decoration:none;display:inline-block;margin-top:4px;">📄 View Cert</a>`;
+            }
+        }
         else if(v.status === "overdue") statusHTML = `<span class="status-pill" style="background:#ffebee;color:#d32f2f;">Overdue</span>`;
         else statusHTML = `<span class="status-pill pill-upcoming">Upcoming</span>`;
         tableHTML += `<tr><td>${v.vaccineName}</td><td>${statusHTML}</td></tr>`;

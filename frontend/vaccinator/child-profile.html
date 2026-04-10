@@ -93,6 +93,7 @@
             <a href="schedule.html" class="nav-link">Vaccination Schedule</a>
             <a href="fup.html" class="nav-link">Lost to Follow-Up</a>
             <a href="appointment.html" class="nav-link">Appointment</a>
+            <a href="scanner.html" class="nav-link">Digital Scanner</a>
             <a href="profile.html" class="nav-link">Profile</a>
         </nav>
     </aside>
@@ -232,6 +233,7 @@
                     </div>
                     <div class="actions">
                         ${v.status === 'completed' ? `
+                            ${v.certificateId ? `<button type="button" class="btn btn-sm btn-outline" style="border:1px solid #2e7d32;color:#2e7d32;background:transparent;padding:4px 8px;border-radius:4px;cursor:pointer;" onclick="window.open('/frontend/verify.html?id=${v.certificateId}', '_blank')">View Certificate</button>` : ""}
                             <button type="button" class="btn btn-sm btn-secondary mark-uncomplete-btn" data-vaccine="${enc}" data-dose="${dose}">Undo</button>
                         ` : `
                             <button type="button" class="btn btn-sm btn-secondary reschedule-btn" data-vaccine="${enc}" data-dose="${dose}">Reschedule</button>
